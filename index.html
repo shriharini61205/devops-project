@@ -122,12 +122,8 @@ button {
 let cart = {};
 let total = 0;
 
-/* LOAD */
-if(!localStorage.getItem("user")){
-    showAuth();
-} else {
-    showProducts();
-}
+/* 🔥 ALWAYS START WITH LOGIN/SIGNUP */
+showAuth();
 
 /* ---------------- AUTH ---------------- */
 
@@ -170,7 +166,12 @@ function showSignup(){
 
 function login(){
     localStorage.setItem("user","login");
-    showProducts();
+
+    if(localStorage.getItem("details")){
+        showProducts();
+    } else {
+        showDetails();
+    }
 }
 
 function signup(){
@@ -234,10 +235,21 @@ function showProducts(){
             const name = p.name || "No Name";
             const price = p.price || 0;
 
-            let image = p.image;
-            if(!image){
-                image = `https://via.placeholder.com/200?text=${name}`;
-            }
+            // 🔥 FIXED IMAGE MAPPING
+            const imageMap = {
+                "Milk": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b",
+                "Bread": "https://images.unsplash.com/photo-1608198093002-ad4e005484ec",
+                "Pizza": "https://images.unsplash.com/photo-1542281286-9e0a16bb7366",
+                "Banana": "https://images.unsplash.com/photo-1574226516831-e1dff420e12b",
+                "Biscuit": "https://images.unsplash.com/photo-1604908176997-431d7e1fa532",
+                "Perfume": "https://images.unsplash.com/photo-1585386959984-a415522316f5",
+                "Chocolate": "https://images.unsplash.com/photo-1606312619070-d48b4c652a52",
+                "Apple": "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce",
+                "Notebook": "https://images.unsplash.com/photo-1517842645767-c639042777db",
+                "Shoes": "https://images.unsplash.com/photo-1542291026-7eec264c27ff"
+            };
+
+            let image = imageMap[name] || `https://via.placeholder.com/200?text=${name}`;
 
             const div = document.createElement('div');
             div.className = 'card';
@@ -246,7 +258,7 @@ function showProducts(){
                 <img src="${image}" onerror="this.src='https://via.placeholder.com/200?text=Image'">
                 <h3>${name}</h3>
                 <p class="price">₹${price}</p>
-                <button class="success" onclick="add('${p.id}','${name}',${price})">Add to Cart</button>
+                <button class="success" onclick="add('${p.id}','${name}',${price})">Add</button>
             `;
 
             container.appendChild(div);
