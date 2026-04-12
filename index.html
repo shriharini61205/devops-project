@@ -1,133 +1,239 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My E-commerce</title>
+    <title>Welcome to E-commerce World</title>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            margin: 0;
-            padding: 0;
+        body { font-family: Arial; margin:0; background:#f1f3f6; }
+
+        .center { text-align:center; margin-top:50px; }
+
+        input { padding:8px; margin:5px; width:200px; }
+
+        button {
+            padding:10px;
+            margin:5px;
+            border:none;
+            cursor:pointer;
+            border-radius:5px;
         }
 
-        h1 {
-            text-align: center;
-            background: #333;
-            color: white;
-            padding: 15px;
-            margin: 0;
+        .header {
+            background:#2874f0;
+            color:white;
+            padding:15px;
+            display:flex;
+            justify-content:space-between;
         }
+
+        .logout { background:red; color:white; }
 
         #products {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin: 20px;
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(200px,1fr));
+            gap:20px;
+            padding:20px;
         }
 
         .card {
-            background: white;
-            width: 200px;
-            padding: 15px;
-            margin: 10px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            text-align: center;
+            background:white;
+            padding:15px;
+            text-align:center;
+            border-radius:8px;
         }
 
-        .price {
-            color: green;
-            font-weight: bold;
-        }
-
-        button {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            margin-top: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #218838;
+        .card img {
+            width:100%;
+            height:150px;
+            object-fit:cover;
         }
 
         .cart {
-            text-align: center;
-            margin: 20px;
-        }
-
-        .total {
-            font-size: 20px;
-            font-weight: bold;
-        }
-
-        .order-btn {
-            background: #007bff;
-            padding: 10px 20px;
-        }
-
-        .order-btn:hover {
-            background: #0056b3;
+            position:fixed;
+            bottom:0;
+            width:100%;
+            background:white;
+            padding:10px;
+            text-align:center;
         }
     </style>
 </head>
 
 <body>
 
-<h1>🛒 My E-commerce Store</h1>
-
-<div id="products"></div>
-
-<div class="cart">
-    <p class="total">Total: ₹<span id="total">0</span></p>
-    <button class="order-btn" onclick="placeOrder()">Place Order</button>
-</div>
+<div id="app"></div>
 
 <script>
+let cart = {};
 let total = 0;
-let cart = [];
 
-fetch('/api/products')
-.then(res => res.json())
-.then(data => {
-    const container = document.getElementById('products');
-
-    data.forEach(p => {
-        const div = document.createElement('div');
-        div.className = 'card';
-
-        div.innerHTML = `
-            <h3>${p.name}</h3>
-            <p class="price">₹${p.price}</p>
-            <button onclick="addToCart('${p.id}', ${p.price})">Add to Cart</button>
-        `;
-
-        container.appendChild(div);
-    });
-});
-
-function addToCart(id, price) {
-    total += price;
-    cart.push({id, price});
-    document.getElementById('total').innerText = total;
+// MAIN LOAD
+if(!localStorage.getItem("user")){
+    showAuthChoice();
+} else {
+    showProducts();
 }
 
-function placeOrder() {
-    fetch('/api/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cart, total })
-    })
-    .then(() => {
-        alert("✅ Order Placed Successfully!");
-        total = 0;
-        cart = [];
-        document.getElementById('total').innerText = 0;
+// ---------------- AUTH ----------------
+
+function showAuthChoice(){
+    document.getElementById('app').innerHTML = `
+        <div class="center">
+            <h2>Welcome</h2>
+            <button onclick="showLogin()">Login</button>
+            <button onclick="showSignup()">Signup</button>
+        </div>
+    `;
+}
+
+function showLogin(){
+    document.getElementById('app').innerHTML = `
+        <div class="center">
+            <h2>Login</h2>
+            <input id="email" placeholder="Email"><br>
+            <input id="password" type="password" placeholder="Password"><br>
+            <button onclick="login()">Login</button>
+        </div>
+    `;
+}
+
+function showSignup(){
+    document.getElementById('app').innerHTML = `
+        <div class="center">
+            <h2>Signup</h2>
+            <input id="email" placeholder="Email"><br>
+            <input id="password" type="password" placeholder="Password"><br>
+            <button onclick="signup()">Signup</button>
+        </div>
+    `;
+}
+
+function login(){
+    localStorage.setItem("user", "logged");
+    showProducts();
+}
+
+function signup(){
+    localStorage.setItem("user", "new");
+    showDetails();
+}
+
+// ---------------- DETAILS ----------------
+
+function showDetails(){
+    document.getElementById('app').innerHTML = `
+        <div class="center">
+            <h2>Enter Details</h2>
+            <input id="name" placeholder="Name"><br>
+            <input id="phone" placeholder="Phone"><br>
+            <input id="address" placeholder="Address"><br>
+            <button onclick="saveDetails()">Continue</button>
+        </div>
+    `;
+}
+
+function saveDetails(){
+    const details = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        address: document.getElementById('address').value
+    };
+
+    localStorage.setItem("details", JSON.stringify(details));
+    showProducts();
+}
+
+// ---------------- PRODUCTS ----------------
+
+function showProducts(){
+    document.getElementById('app').innerHTML = `
+        <div class="header">
+            <h2>🛒 My Store</h2>
+            <button class="logout" onclick="logout()">Logout</button>
+        </div>
+
+        <div id="products"></div>
+
+        <div class="cart">
+            Total: ₹<span id="total">0</span>
+            <button onclick="goToCart()">Cart</button>
+        </div>
+    `;
+
+    fetch('/api/products')
+    .then(res => res.json())
+    .then(data => {
+        const container = document.getElementById('products');
+
+        data.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'card';
+
+            div.innerHTML = `
+                <img src="${p.image}">
+                <h3>${p.name}</h3>
+                <p>₹${p.price}</p>
+                <button onclick="add('${p.id}','${p.name}',${p.price})">Add</button>
+            `;
+
+            container.appendChild(div);
+        });
     });
+}
+
+function add(id,name,price){
+    if(cart[id]){
+        cart[id].qty++;
+    } else {
+        cart[id] = {name, price, qty:1};
+    }
+
+    total += price;
+    document.getElementById('total').innerText = total;
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+}
+
+// ---------------- CART ----------------
+
+function goToCart(){
+    let cartData = JSON.parse(localStorage.getItem("cart")) || {};
+    let total = 0;
+    let html = `<h2>🛒 Cart</h2>`;
+
+    for(let id in cartData){
+        let item = cartData[id];
+        let itemTotal = item.price * item.qty;
+        total += itemTotal;
+
+        html += `<p>${item.name} (${item.qty}) = ₹${itemTotal}</p>`;
+    }
+
+    html += `<hr>Total = ₹${total}<br>
+             <button onclick="placeOrder()">Place Order</button>`;
+
+    document.getElementById('app').innerHTML = html;
+}
+
+function placeOrder(){
+    let cartData = JSON.parse(localStorage.getItem("cart"));
+
+    fetch('/api/order',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({cart:cartData})
+    }).then(()=>{
+        alert("Order placed!");
+        localStorage.removeItem("cart");
+        showProducts();
+    });
+}
+
+// ---------------- LOGOUT ----------------
+
+function logout(){
+    localStorage.clear();
+    location.reload();
 }
 </script>
 
