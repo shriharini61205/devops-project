@@ -1,23 +1,29 @@
-const express = require("express");
+const express = require('express');
+const AWS = require('aws-sdk');
+
 const app = express();
+
+// AWS config
+AWS.config.update({
+    region: 'ap-southeast-1'
+});
+
+const dynamo = new AWS.DynamoDB.DocumentClient();
+
 app.use(express.static(__dirname));
 
-// Import routes
-const productRoutes = require("./routes/productRoutes");
+// API from DynamoDB
+app.get('/api/products', async (req, res) => {
+    const params = {
+        TableName: "Products"
+    };
 
-// Middleware
-app.use(express.json());
-
-// Routes
-app.use("/api/products", productRoutes);
-
-// Test route
-app.get("/", (req, res) => {
-  res.send("E-commerce API Running 🚀");
+    try {
+        const data = await dynamo.scan(params).promise();
+        res.json(data.Items);
+    } catch (err) {
+        res.status(500).send(err);
+    }
 });
 
-// Server
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(3000, () => console.log("Server running"));
