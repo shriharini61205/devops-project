@@ -72,6 +72,11 @@ button {
     text-align:center;
     box-shadow:0 2px 6px rgba(0,0,0,0.2);
     transition:0.3s;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    height:300px; /* FIX */
 }
 
 .card:hover {
@@ -80,8 +85,13 @@ button {
 
 .card img {
     width:100%;
-    height:160px;
+    height:140px;
     object-fit:cover;
+    border-radius:5px;
+}
+
+.card button {
+    margin-top:10px;
 }
 
 .price {
@@ -122,7 +132,7 @@ button {
 let cart = {};
 let total = 0;
 
-/* 🔥 ALWAYS START WITH LOGIN/SIGNUP */
+/* ALWAYS START AUTH */
 showAuth();
 
 /* ---------------- AUTH ---------------- */
@@ -228,26 +238,25 @@ function showProducts(){
 
         const container = document.getElementById('products');
 
+        const imageMap = {
+            "Milk": "https://cdn.pixabay.com/photo/2017/01/20/15/06/milk-1997778_1280.jpg",
+            "Bread": "https://cdn.pixabay.com/photo/2016/03/05/19/02/bread-1238612_1280.jpg",
+            "Pizza": "https://cdn.pixabay.com/photo/2017/12/09/08/18/pizza-3007395_1280.jpg",
+            "Banana": "https://cdn.pixabay.com/photo/2018/08/12/15/29/banana-3602293_1280.jpg",
+            "Biscuit": "https://cdn.pixabay.com/photo/2016/11/29/05/08/cookies-1868570_1280.jpg",
+            "Perfume": "https://cdn.pixabay.com/photo/2017/08/06/10/24/perfume-2598081_1280.jpg",
+            "Chocolate": "https://cdn.pixabay.com/photo/2017/05/07/08/56/chocolate-2292757_1280.jpg",
+            "Apple": "https://cdn.pixabay.com/photo/2016/02/23/17/42/apple-1218166_1280.jpg",
+            "Notebook": "https://cdn.pixabay.com/photo/2015/05/31/10/55/notebook-791993_1280.jpg",
+            "Shoes": "https://cdn.pixabay.com/photo/2016/11/29/03/53/adidas-1867468_1280.jpg"
+        };
+
         data.forEach(item => {
 
             const p = JSON.parse(item.id);
 
             const name = p.name || "No Name";
             const price = p.price || 0;
-
-            // 🔥 FIXED IMAGE MAPPING
-            const imageMap = {
-                "Milk": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b",
-                "Bread": "https://images.unsplash.com/photo-1608198093002-ad4e005484ec",
-                "Pizza": "https://images.unsplash.com/photo-1542281286-9e0a16bb7366",
-                "Banana": "https://images.unsplash.com/photo-1574226516831-e1dff420e12b",
-                "Biscuit": "https://images.unsplash.com/photo-1604908176997-431d7e1fa532",
-                "Perfume": "https://images.unsplash.com/photo-1585386959984-a415522316f5",
-                "Chocolate": "https://images.unsplash.com/photo-1606312619070-d48b4c652a52",
-                "Apple": "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce",
-                "Notebook": "https://images.unsplash.com/photo-1517842645767-c639042777db",
-                "Shoes": "https://images.unsplash.com/photo-1542291026-7eec264c27ff"
-            };
 
             let image = imageMap[name] || `https://via.placeholder.com/200?text=${name}`;
 
