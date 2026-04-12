@@ -1,29 +1,20 @@
-const express = require('express');
-const AWS = require('aws-sdk');
+app.use(express.json());
 
-const app = express();
-
-// AWS config
-AWS.config.update({
-    region: 'ap-southeast-1'
-});
-
-const dynamo = new AWS.DynamoDB.DocumentClient();
-
-app.use(express.static(__dirname));
-
-// API from DynamoDB
-app.get('/api/products', async (req, res) => {
+// Save order
+app.post('/api/order', async (req, res) => {
     const params = {
-        TableName: "Products"
+        TableName: "Orders",
+        Item: {
+            orderId: Date.now().toString(),
+            items: req.body.cart,
+            total: req.body.total
+        }
     };
 
     try {
-        const data = await dynamo.scan(params).promise();
-        res.json(data.Items);
+        await dynamo.put(params).promise();
+        res.send("Order saved");
     } catch (err) {
         res.status(500).send(err);
     }
 });
-
-app.listen(3000, () => console.log("Server running"));

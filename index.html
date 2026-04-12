@@ -1,42 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title> E-commerce App</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: #f4f4f4;
-            text-align: center;
-        }
-        h1 {
-            color: #333;
-        }
-        .product {
-            background: white;
-            padding: 10px;
-            margin: 10px;
-            display: inline-block;
-            border-radius: 8px;
-        }
-    </style>
+    <title>E-commerce</title>
 </head>
 <body>
 
-<h1>🛒 My Products</h1>
+<h1>🛒 Products</h1>
 <div id="products"></div>
 
+<h2>Total: ₹<span id="total">0</span></h2>
+<button onclick="placeOrder()">Place Order</button>
+
 <script>
+let total = 0;
+let cart = [];
+
 fetch('/api/products')
 .then(res => res.json())
 .then(data => {
     const container = document.getElementById('products');
     data.forEach(p => {
         const div = document.createElement('div');
-        div.className = 'product';
-        div.innerHTML = `<h3>${p.name}</h3>`;
+        div.innerHTML = `
+            <h3>${p.name} - ₹${p.price}</h3>
+            <button onclick="addToCart('${p.id}', ${p.price})">Add</button>
+        `;
         container.appendChild(div);
     });
 });
+
+function addToCart(id, price) {
+    total += price;
+    cart.push({id, price});
+    document.getElementById('total').innerText = total;
+}
+
+function placeOrder() {
+    fetch('/api/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cart, total })
+    }).then(() => alert("Order Placed!"));
+}
 </script>
 
 </body>
