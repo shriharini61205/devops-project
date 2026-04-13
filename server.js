@@ -2,14 +2,12 @@ const express = require('express');
 const AWS = require('aws-sdk');
 
 const app = express();
-
 app.use(express.json());
-app.use(express.static('.'));
 
-/* AWS CONFIG (Singapore) */
-AWS.config.update({
-    region: 'ap-southeast-1'
-});
+// ✅ FIX: Serve static files correctly
+app.use(express.static(__dirname));
+
+AWS.config.update({ region: 'ap-southeast-1' });
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
 
@@ -17,7 +15,7 @@ const dynamo = new AWS.DynamoDB.DocumentClient();
 app.get('/api/products', (req, res) => {
 
     const products = [
-        { id: "1", name: "Milk", price: 20 },
+        { id: "1", name: "Milk", price: 35 },
         { id: "2", name: "Bread", price: 50 },
         { id: "3", name: "Pizza", price: 200 },
         { id: "4", name: "Banana", price: 20 },
@@ -29,83 +27,44 @@ app.get('/api/products', (req, res) => {
         { id: "10", name: "Shoes", price: 200 }
     ];
 
-    res.json(products);
+    res.json(products.map(p => ({
+        id: JSON.stringify(p)
+    })));
 });
 
-/* WHATSAPP MESSAGE */
-function formatWhatsAppMessage(cart, total, orderId) {
-    let message = "🛒 Order Details from Ecommerce World\n\n";
-
-    for (let id in cart) {
-        const item = cart[id];
-        message += `${item.name} (${item.qty}) = ${item.price * item.qty}\n`;
-    }
-
-    message += "----------------\n";
-    message += `Total = ${total}\n`;
-    message += `Order ID: ${orderId}\n`;
-    message += "----------------";
-
-    return encodeURIComponent(message);
-}
-
-/* PLACE ORDER */
+/* SAVE ORDER */
 app.post('/api/order', async (req, res) => {
 
+    const cart = req.body.cart;
+    const orderId = Date.now().toString();
+
+    let total = 0;
+
+    for (let id in cart) {
+        total += cart[id].price * cart[id].qty;
+    }
+
+    const params = {
+        TableName: "Orders",
+        Item: {
+            id: orderId, // ✅ DynamoDB primary key
+            cart: cart,
+            total: total,
+            createdAt: new Date().toISOString()
+        }
+    };
+
     try {
-        const cart = req.body.cart || {};
-        const phone = req.body.phone;
-
-        if (!phone) {
-            return res.status(400).json({ error: "Phone number required" });
-        }
-
-        if (Object.keys(cart).length === 0) {
-            return res.status(400).json({ error: "Cart is empty" });
-        }
-
-        const orderId = Date.now().toString();
-        let total = 0;
-
-        for (let id in cart) {
-            total += cart[id].price * cart[id].qty;
-        }
-
-        /* SAVE IN DYNAMODB */
-        const params = {
-            TableName: "Orders",
-            Item: {
-                id: orderId,
-                phone: phone,
-                cart: JSON.stringify(cart),
-                total: total,
-                createdAt: new Date().toISOString()
-            }
-        };
-
         await dynamo.put(params).promise();
 
-        console.log("✅ Order saved:", params.Item);
+        console.log("Saved:", params.Item);
 
-        /* WHATSAPP */
-        const phoneNumber = "91" + phone;
-        const message = formatWhatsAppMessage(cart, total, orderId);
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
-
-        res.json({
-            message: "Order saved successfully",
-            orderId,
-            total,
-            whatsappUrl
-        });
+        res.json({ message: "Order saved" });
 
     } catch (err) {
-        console.error("❌ Error:", err);
-        res.status(500).json({ error: err.message });
+        console.error("Error:", err);
+        res.status(500).json({ error: "Failed" });
     }
 });
 
-/* START SERVER */
-app.listen(3000, () => {
-    console.log("🚀 Server running on port 3000");
-});
+app.listen(3000, () => console.log("Server running on port 3000"));
