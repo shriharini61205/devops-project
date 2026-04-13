@@ -2,14 +2,20 @@ const express = require('express');
 const AWS = require('aws-sdk');
 
 const app = express();
+
 app.use(express.json());
 app.use(express.static('.'));
 
-AWS.config.update({ region: 'ap-south-1' });
+/* ✅ AWS CONFIG (SINGAPORE REGION) */
+AWS.config.update({
+    region: 'ap-southeast-1'
+});
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
 
-/* PRODUCTS */
+/* =======================
+   PRODUCTS API
+======================= */
 app.get('/api/products', (req, res) => {
 
     const products = [
@@ -25,45 +31,57 @@ app.get('/api/products', (req, res) => {
         { id: "10", name: "Shoes", price: 200 }
     ];
 
-    res.json(products.map(p => ({
-        id: JSON.stringify(p)
-    })));
+    // FIXED (no JSON stringify bug)
+    res.json(products);
 });
 
-/* SAVE ORDER */
+/* =======================
+   PLACE ORDER API
+======================= */
 app.post('/api/order', async (req, res) => {
 
-    const cart = req.body.cart;
-
-    const orderId = Date.now().toString();
-
-    let total = 0;
-
-    for (let id in cart) {
-        total += cart[id].price * cart[id].qty;
-    }
-
-    const params = {
-        TableName: "Orders",
-        Item: {
-            orderId: orderId,
-            cart: cart,
-            total: total,
-            createdAt: new Date().toISOString()
-        }
-    };
-
     try {
+        const cart = req.body.cart || {};
+
+        const orderId = Date.now().toString();
+        let total = 0;
+
+        // Calculate total
+        for (let id in cart) {
+            total += cart[id].price * cart[id].qty;
+        }
+
+        const params = {
+            TableName: "Orders",
+            Item: {
+                orderId: orderId,
+                cart: JSON.stringify(cart), // IMPORTANT FIX
+                total: total,
+                createdAt: new Date().toISOString()
+            }
+        };
+
         await dynamo.put(params).promise();
 
-        console.log("Saved:", params.Item);
+        console.log("✅ Order saved successfully:", params.Item);
 
-        res.json({ message: "Order saved" });
+        res.json({
+            message: "Order saved successfully",
+            orderId: orderId,
+            total: total
+        });
 
     } catch (err) {
-        console.error("Error:", err);
-        res.status(500).json({ error: "Failed" });
+        console.error("❌ DynamoDB Error:", err);
+        res.status(500).json({
+            error: err.message
+        });
     }
 });
 
-app.listen(3000, () => console.log("Server running"));
+/* =======================
+   START SERVER
+======================= */
+app.listen(3000, () => {
+    console.log("🚀 Server running on port 3000");
+});
