@@ -75,7 +75,6 @@ button {
     display:flex;
     flex-direction:column;
     justify-content:space-between;
-
     min-height:320px;
 }
 
@@ -225,14 +224,14 @@ function showProducts(){
             const name = p.name || "No Name";
             const price = p.price || 0;
 
-            // 🔥 AUTO IMAGE (NO DOWNLOAD NEEDED)
-            let image = `https://source.unsplash.com/300x200/?${name},product`;
+            // 🔥 LOCAL IMAGE
+            let image = "images/" + name.toLowerCase() + ".jpg";
 
             const div = document.createElement('div');
             div.className = 'card';
 
             div.innerHTML = `
-                <img src="${image}" onerror="this.src='https://via.placeholder.com/200'">
+                <img src="${image}" onerror="this.src='images/default.jpg'">
                 <h3>${name}</h3>
                 <p class="price">₹${price}</p>
                 <button class="success" onclick="add('${p.id}','${name}',${price})">Add</button>
