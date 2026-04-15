@@ -1,101 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Ecommerce World</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Store</title>
 
 <style>
 body { font-family: Arial; margin:0; background:#f1f3f6; }
 
-/* HEADER */
-.header {
-    background:#2874f0;
-    color:white;
-    padding:12px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+.center {
+    display:flex; justify-content:center; align-items:center;
+    height:100vh;
+    background: linear-gradient(135deg,#2874f0,#6dd5fa);
 }
 
-/* ✅ PERFECT GRID */
+.auth-box {
+    background:white; padding:30px; border-radius:10px;
+    width:300px; text-align:center;
+}
+
+input { padding:10px; margin:8px; width:90%; }
+
+button { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
+
+.primary { background:#2874f0; color:white; width:100%; }
+.success { background:green; color:white; width:100%; }
+.danger { background:red; color:white; }
+
+.header {
+    background:#2874f0; color:white;
+    padding:15px; display:flex; justify-content:space-between;
+}
+
 #products {
     display:grid;
-    grid-template-columns:repeat(auto-fill, 200px);
-    justify-content:center;
-    gap:20px;
-    padding:20px;
+    grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:20px; padding:20px;
 }
 
-/* ✅ CARD */
 .card {
-    width:200px;
-    height:280px; /* 🔥 fixed height */
-
-    background:white;
-    border-radius:10px;
-    padding:10px;
-
-    display:flex;
-    flex-direction:column;
+    background:white; padding:15px;
+    border-radius:10px; text-align:center;
 }
 
-/* IMAGE */
-.image-box {
-    width:100%;
-    height:120px;
-    overflow:hidden;
-    border-radius:8px;
-}
+.card img { width:100%; height:150px; object-fit:cover; }
 
-.image-box img {
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
+.price { color:green; font-weight:bold; }
 
-/* CONTENT */
-.card-content {
-    text-align:center;
-}
+.qty { display:flex; justify-content:center; gap:10px; }
 
-/* TEXT */
-.card h3 {
-    font-size:14px;
-    margin:5px 0;
-}
+.qty button { background:#2874f0; color:white; }
 
-.price {
-    color:green;
-    font-weight:bold;
-    margin:0;
-}
-
-/* ✅ QTY ALWAYS VISIBLE */
-.qty {
-    margin-top:auto;
-    display:flex;
-    justify-content:center;
-    gap:10px;
-}
-
-.qty button {
-    background:#2874f0;
-    color:white;
-    width:28px;
-    height:28px;
-    border:none;
-    border-radius:5px;
-}
-
-/* CART BAR */
 .cart-bar {
-    position:fixed;
-    bottom:0;
-    width:100%;
-    background:white;
-    padding:10px;
-    text-align:center;
+    position:fixed; bottom:0; width:100%;
+    background:white; padding:10px; text-align:center;
 }
 </style>
 </head>
@@ -105,12 +61,113 @@ body { font-family: Arial; margin:0; background:#f1f3f6; }
 
 <script>
 
+/* LOAD CART FROM STORAGE */
 let cart = JSON.parse(localStorage.getItem("cart")) || {};
 let total = 0;
 
-showProducts();
+showAuth();
 
-/* PRODUCTS */
+/* -------- AUTH -------- */
+
+function showAuth(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="auth-box">
+            <h2>Welcome</h2>
+            <button class="primary" onclick="showLogin()">Login</button><br><br>
+            <button class="success" onclick="showSignup()">Signup</button>
+        </div>
+    </div>`;
+}
+
+function showLogin(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="auth-box">
+            <h2>Login</h2>
+            <input id="email" placeholder="Email">
+            <input id="password" type="password" placeholder="Password">
+            <button class="primary" onclick="login()">Login</button>
+        </div>
+    </div>`;
+}
+
+function showSignup(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="auth-box">
+            <h2>Signup</h2>
+            <input id="email" placeholder="Email">
+            <input id="password" type="password" placeholder="Password">
+            <button class="success" onclick="signup()">Signup</button>
+        </div>
+    </div>`;
+}
+
+function signup(){
+    let email = document.getElementById('email').value.trim();
+    let password = document.getElementById('password').value.trim();
+
+    if(!email || !password){
+        alert("Fill all fields");
+        return;
+    }
+
+    localStorage.setItem("userEmail", email);
+    localStorage.setItem("userPassword", password);
+
+    showDetails();
+}
+
+function login(){
+    let email = document.getElementById('email').value.trim();
+    let password = document.getElementById('password').value.trim();
+
+    let savedEmail = localStorage.getItem("userEmail");
+    let savedPassword = localStorage.getItem("userPassword");
+
+    if(!email || !password){
+        alert("Enter details");
+        return;
+    }
+
+    if(email === savedEmail && password === savedPassword){
+        showProducts();
+    } else {
+        alert("Invalid credentials");
+    }
+}
+
+/* -------- DETAILS -------- */
+
+function showDetails(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="auth-box">
+            <h2>User Details</h2>
+            <input id="name" placeholder="Name">
+            <input id="phone" placeholder="Phone">
+            <input id="address" placeholder="Address">
+            <button class="success" onclick="saveDetails()">Continue</button>
+        </div>
+    </div>`;
+}
+
+function saveDetails(){
+    let name = document.getElementById('name').value.trim();
+    let phone = document.getElementById('phone').value.trim();
+    let address = document.getElementById('address').value.trim();
+
+    if(!name || !phone || !address){
+        alert("Fill all details");
+        return;
+    }
+
+    localStorage.setItem("details", JSON.stringify({name,phone,address}));
+    showProducts();
+}
+
+/* -------- PRODUCTS -------- */
 
 function calculateTotal(){
     total = 0;
@@ -120,17 +177,17 @@ function calculateTotal(){
 }
 
 function showProducts(){
-
     document.getElementById('app').innerHTML = `
         <div class="header">
-            <h2>Ecommerce World</h2>
+            <h2>My Store</h2>
+            <button class="danger" onclick="logout()">Logout</button>
         </div>
 
         <div id="products"></div>
 
         <div class="cart-bar">
             Total: ₹<span id="total">0</span>
-            <button onclick="goToCart()">View Cart</button>
+            <button class="primary" onclick="goToCart()">View Cart</button>
         </div>
     `;
 
@@ -141,31 +198,25 @@ function showProducts(){
         let container = document.getElementById('products');
 
         data.forEach(item => {
+            let p = JSON.parse(item.id);
+            let name = p.name;
+            let price = p.price;
 
-            let id = item.id;
-            let name = item.name;
-            let price = item.price;
-
-            let qty = cart[id] ? cart[id].qty : 0;
-            let image = "/images/" + name.toLowerCase() + ".jpg";
+            let qty = cart[p.id] ? cart[p.id].qty : 0;
+            let image = "images/" + name.toLowerCase() + ".jpg";
 
             let div = document.createElement('div');
             div.className = "card";
 
             div.innerHTML = `
-                <div class="image-box">
-                    <img src="${image}" onerror="this.src='/images/default.jpg'">
-                </div>
-
-                <div class="card-content">
-                    <h3>${name}</h3>
-                    <p class="price">₹${price}</p>
-                </div>
+                <img src="${image}" onerror="this.src='images/default.jpg'">
+                <h3>${name}</h3>
+                <p class="price">₹${price}</p>
 
                 <div class="qty">
-                    <button onclick="decrease('${id}')">-</button>
-                    <span>${qty}</span>
-                    <button onclick="increase('${id}','${name}',${price})">+</button>
+                    <button onclick="decrease('${p.id}', ${price})">-</button>
+                    <span id="qty-${p.id}">${qty}</span>
+                    <button onclick="increase('${p.id}','${name}',${price})">+</button>
                 </div>
             `;
 
@@ -177,62 +228,98 @@ function showProducts(){
     });
 }
 
-/* CART */
+/* -------- CART LOGIC -------- */
 
 function increase(id,name,price){
     if(!cart[id]) cart[id] = {name,price,qty:0};
+
     cart[id].qty++;
+
+    calculateTotal();
+
+    document.getElementById(`qty-${id}`).innerText = cart[id].qty;
+    document.getElementById('total').innerText = total;
+
     localStorage.setItem("cart", JSON.stringify(cart));
-    showProducts();
 }
 
-function decrease(id){
-    if(cart[id]){
+function decrease(id,price){
+    if(cart[id] && cart[id].qty > 0){
         cart[id].qty--;
-        if(cart[id].qty <= 0) delete cart[id];
+
+        if(cart[id].qty === 0){
+            delete cart[id];
+        }
+
+        calculateTotal();
+
+        document.getElementById(`qty-${id}`).innerText = cart[id] ? cart[id].qty : 0;
+        document.getElementById('total').innerText = total;
+
         localStorage.setItem("cart", JSON.stringify(cart));
-        showProducts();
     }
 }
 
-/* CART PAGE */
+/* -------- CART PAGE -------- */
 
 function goToCart(){
-
+    let cartData = JSON.parse(localStorage.getItem("cart")) || {};
     let total = 0;
-    let bill = "";
 
-    for(let id in cart){
-        let item = cart[id];
+    let html = `
+        <div class="header">
+            <h2>Cart</h2>
+            <button class="danger" onclick="showProducts()">Back</button>
+        </div>
+        <div style="padding:20px;">
+    `;
+
+    for(let id in cartData){
+        let item = cartData[id];
         let itemTotal = item.price * item.qty;
         total += itemTotal;
 
-        bill += `${item.name} (${item.qty}) = ₹${itemTotal}<br>`;
+        html += `
+            <div style="background:white;padding:10px;margin:10px;border-radius:5px;">
+                ${item.name} (${item.qty}) = ₹${itemTotal}
+            </div>
+        `;
     }
 
-    document.getElementById('app').innerHTML = `
-        <div class="header">
-            <h2>Cart</h2>
-            <button onclick="showProducts()">Back</button>
-        </div>
-
-        <div style="padding:20px;">
-            ${bill}
-            <hr>
-            <h3>Total Amount = ₹${total}</h3>
-            <hr>
-            <button onclick="placeOrder()">Place Order</button>
+    html += `
+        <h2>Total: ₹${total}</h2>
+        <button class="success" onclick="placeOrder()">Place Order</button>
         </div>
     `;
+
+    document.getElementById('app').innerHTML = html;
 }
 
-/* ORDER */
+/* -------- PLACE ORDER -------- */
 
 function placeOrder(){
-    alert("✅ Order placed successfully!");
-    cart = {};
-    localStorage.removeItem("cart");
-    showProducts();
+
+    fetch('/api/order',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({cart})
+    }).then(()=>{
+        alert("✅ Order Placed!");
+
+        cart = {};
+        total = 0;
+
+        localStorage.removeItem("cart");
+
+        showProducts();
+    });
+}
+
+/* -------- LOGOUT -------- */
+
+function logout(){
+    localStorage.clear();
+    location.reload();
 }
 
 </script>
