@@ -4,14 +4,15 @@ const AWS = require('aws-sdk');
 const app = express();
 app.use(express.json());
 
-// ✅ FIX: Serve static files correctly
+// ✅ Serve static files (images + html)
 app.use(express.static(__dirname));
 
+// ✅ AWS Region (Singapore)
 AWS.config.update({ region: 'ap-southeast-1' });
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
 
-/* PRODUCTS */
+/* PRODUCTS API */
 app.get('/api/products', (req, res) => {
 
     const products = [
@@ -27,9 +28,8 @@ app.get('/api/products', (req, res) => {
         { id: "10", name: "Shoes", price: 200 }
     ];
 
-    res.json(products.map(p => ({
-        id: JSON.stringify(p)
-    })));
+    // ✅ FIXED: send clean JSON
+    res.json(products);
 });
 
 /* SAVE ORDER */
@@ -47,7 +47,7 @@ app.post('/api/order', async (req, res) => {
     const params = {
         TableName: "Orders",
         Item: {
-            id: orderId, // ✅ DynamoDB primary key
+            id: orderId, // ✅ primary key
             cart: cart,
             total: total,
             createdAt: new Date().toISOString()
@@ -56,14 +56,10 @@ app.post('/api/order', async (req, res) => {
 
     try {
         await dynamo.put(params).promise();
-
-        console.log("Saved:", params.Item);
-
         res.json({ message: "Order saved" });
-
     } catch (err) {
-        console.error("Error:", err);
-        res.status(500).json({ error: "Failed" });
+        console.error(err);
+        res.status(500).json({ error: "Failed to save order" });
     }
 });
 
