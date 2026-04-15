@@ -3,7 +3,6 @@
 <head>
 <title>Ecommerce World</title>
 
-<!-- ✅ IMPORTANT FOR RESPONSIVE -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -31,34 +30,37 @@ button { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
 
 /* HEADER */
 .header {
-    background:#2874f0; color:white;
+    background:#2874f0;
+    color:white;
     padding:12px;
-    display:flex; justify-content:space-between;
+    display:flex;
+    justify-content:space-between;
     align-items:center;
 }
 
 /* GRID */
 #products {
     display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
-    gap:15px;
-    padding:15px;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:20px;
+    padding:20px;
 }
 
 /* CARD */
 .card {
     background:white;
     border-radius:10px;
-    padding:10px;
+    padding:12px;
+
     display:flex;
     flex-direction:column;
-    justify-content:space-between;
-    min-height:300px; /* ✅ FIX */
+
+    height:100%;
 }
 
 /* IMAGE */
 .image-box {
-    height:120px;
+    height:130px;
     display:flex;
     justify-content:center;
     align-items:center;
@@ -70,26 +72,30 @@ button { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
     object-fit:contain;
 }
 
+/* CONTENT */
+.card-content {
+    flex-grow:1;
+    text-align:center;
+}
+
 /* TEXT */
 .card h3 {
     font-size:15px;
     margin:5px 0;
-    text-align:center;
 }
 
 .price {
     color:green;
     font-weight:bold;
-    text-align:center;
 }
 
-/* QTY */
+/* QTY (ALWAYS BOTTOM) */
 .qty {
+    margin-top:auto;
     display:flex;
     justify-content:center;
     align-items:center;
     gap:10px;
-    margin-top:10px;
 }
 
 .qty button {
@@ -110,29 +116,16 @@ button { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
 }
 
 /* 📱 TABLET */
-@media (max-width: 768px) {
+@media (max-width:768px){
     #products {
-        grid-template-columns:repeat(2, 1fr);
-    }
-
-    .card {
-        min-height:280px;
+        grid-template-columns:repeat(2,1fr);
     }
 }
 
 /* 📱 MOBILE */
-@media (max-width: 480px) {
+@media (max-width:480px){
     #products {
         grid-template-columns:1fr;
-    }
-
-    .header h2 {
-        font-size:16px;
-    }
-
-    .qty button {
-        width:26px;
-        height:26px;
     }
 }
 </style>
@@ -148,7 +141,7 @@ let total = 0;
 
 showAuth();
 
-/* -------- AUTH -------- */
+/* AUTH */
 
 function showAuth(){
     document.getElementById('app').innerHTML = `
@@ -161,7 +154,7 @@ function showAuth(){
     </div>`;
 }
 
-/* -------- SIGNUP -------- */
+/* SIGNUP */
 
 function showSignup(){
     document.getElementById('app').innerHTML = `
@@ -190,7 +183,7 @@ function signup(){
     showDetails();
 }
 
-/* -------- DETAILS -------- */
+/* DETAILS */
 
 function showDetails(){
     document.getElementById('app').innerHTML = `
@@ -220,7 +213,7 @@ function saveDetails(){
     showProducts();
 }
 
-/* -------- LOGIN -------- */
+/* LOGIN */
 
 function showLogin(){
     document.getElementById('app').innerHTML = `
@@ -253,7 +246,7 @@ function login(){
     }
 }
 
-/* -------- PRODUCTS -------- */
+/* PRODUCTS */
 
 function calculateTotal(){
     total = 0;
@@ -301,8 +294,10 @@ function showProducts(){
                     <img src="${image}" onerror="this.src='/images/default.jpg'">
                 </div>
 
-                <h3>${name}</h3>
-                <p class="price">₹${price}</p>
+                <div class="card-content">
+                    <h3>${name}</h3>
+                    <p class="price">₹${price}</p>
+                </div>
 
                 <div class="qty">
                     <button onclick="decrease('${id}')">-</button>
@@ -319,7 +314,7 @@ function showProducts(){
     });
 }
 
-/* -------- CART -------- */
+/* CART */
 
 function increase(id,name,price){
     if(!cart[id]) cart[id] = {name,price,qty:0};
@@ -337,7 +332,7 @@ function decrease(id){
     }
 }
 
-/* -------- CART PAGE -------- */
+/* CART PAGE */
 
 function goToCart(){
 
@@ -368,7 +363,7 @@ function goToCart(){
     `;
 }
 
-/* -------- PLACE ORDER -------- */
+/* PLACE ORDER */
 
 function placeOrder(){
     fetch('/api/order',{
@@ -384,7 +379,7 @@ function placeOrder(){
     });
 }
 
-/* -------- LOGOUT -------- */
+/* LOGOUT */
 
 function logout(){
     localStorage.clear();
