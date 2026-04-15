@@ -38,19 +38,20 @@ button { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
     padding:20px;
 }
 
-/* CARD */
+/* ✅ FINAL FIXED CARD */
 .card {
     background:white;
     border-radius:10px;
     padding:10px;
     display:flex;
     flex-direction:column;
-    height:280px;
+    justify-content:space-between;
+    min-height:320px; /* ✅ important fix */
 }
 
 /* IMAGE BOX */
 .image-box {
-    height:120px;
+    height:130px;
     display:flex;
     justify-content:center;
     align-items:center;
@@ -64,18 +65,13 @@ button { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
 
 /* CONTENT */
 .card-content {
-    flex-grow:1;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:flex-start;
+    text-align:center;
 }
 
 /* TEXT */
 .card h3 {
     font-size:15px;
     margin:5px 0;
-    text-align:center;
 }
 
 .price {
@@ -86,18 +82,18 @@ button { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
 
 /* QTY */
 .qty {
-    margin-top:auto;
     display:flex;
     justify-content:center;
     align-items:center;
     gap:10px;
+    margin-top:10px;
 }
 
 .qty button {
     background:#2874f0;
     color:white;
-    width:28px;
-    height:28px;
+    width:30px;
+    height:30px;
 }
 
 /* CART BAR */
@@ -122,7 +118,7 @@ let total = 0;
 
 showAuth();
 
-/* -------- AUTH PAGE -------- */
+/* -------- AUTH -------- */
 
 function showAuth(){
     document.getElementById('app').innerHTML = `
@@ -347,7 +343,6 @@ function goToCart(){
 /* -------- PLACE ORDER -------- */
 
 function placeOrder(){
-
     fetch('/api/order',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -355,10 +350,8 @@ function placeOrder(){
     })
     .then(() => {
         alert("✅ Order placed successfully!");
-
         cart = {};
         localStorage.removeItem("cart");
-
         showProducts();
     });
 }
