@@ -62,7 +62,112 @@ button { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
 let cart = JSON.parse(localStorage.getItem("cart")) || {};
 let total = 0;
 
-showProducts();
+showAuth();
+
+/* -------- FIRST PAGE -------- */
+
+function showAuth(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="auth-box">
+            <h2>Ecommerce World</h2>
+            <button class="primary" onclick="showLogin()">Login</button><br><br>
+            <button class="success" onclick="showSignup()">Signup</button>
+        </div>
+    </div>`;
+}
+
+/* -------- SIGNUP -------- */
+
+function showSignup(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="auth-box">
+            <h2>Signup</h2>
+            <input id="email" placeholder="Email">
+            <input id="password" type="password" placeholder="Password">
+            <button class="success" onclick="signup()">Next</button>
+        </div>
+    </div>`;
+}
+
+function signup(){
+    let email = document.getElementById('email').value.trim();
+    let password = document.getElementById('password').value.trim();
+
+    if(!email || !password){
+        alert("All fields required!");
+        return;
+    }
+
+    localStorage.setItem("userEmail", email);
+    localStorage.setItem("userPassword", password);
+
+    showDetails();
+}
+
+/* -------- DETAILS -------- */
+
+function showDetails(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="auth-box">
+            <h2>User Details</h2>
+            <input id="name" placeholder="Name">
+            <input id="phone" placeholder="Phone">
+            <input id="address" placeholder="Address">
+            <button class="success" onclick="saveDetails()">Continue</button>
+        </div>
+    </div>`;
+}
+
+function saveDetails(){
+    let name = document.getElementById('name').value.trim();
+    let phone = document.getElementById('phone').value.trim();
+    let address = document.getElementById('address').value.trim();
+
+    if(!name || !phone || !address){
+        alert("All fields required!");
+        return;
+    }
+
+    localStorage.setItem("userDetails", JSON.stringify({name,phone,address}));
+
+    showProducts();
+}
+
+/* -------- LOGIN -------- */
+
+function showLogin(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="auth-box">
+            <h2>Login</h2>
+            <input id="email" placeholder="Email">
+            <input id="password" type="password" placeholder="Password">
+            <button class="primary" onclick="login()">Login</button>
+        </div>
+    </div>`;
+}
+
+function login(){
+    let email = document.getElementById('email').value.trim();
+    let password = document.getElementById('password').value.trim();
+
+    let savedEmail = localStorage.getItem("userEmail");
+    let savedPassword = localStorage.getItem("userPassword");
+
+    if(!email || !password){
+        alert("Enter all fields!");
+        return;
+    }
+
+    if(email === savedEmail && password === savedPassword){
+        showProducts();
+    } else {
+        alert("Invalid credentials!");
+    }
+}
 
 /* -------- PRODUCTS -------- */
 
@@ -102,8 +207,6 @@ function showProducts(){
             let price = item.price;
 
             let qty = cart[id] ? cart[id].qty : 0;
-
-            // ✅ FIXED IMAGE PATH
             let image = "/images/" + name.toLowerCase() + ".jpg";
 
             let div = document.createElement('div');
@@ -115,7 +218,7 @@ function showProducts(){
                 <p class="price">₹${price}</p>
 
                 <div class="qty">
-                    <button onclick="decrease('${id}', ${price})">-</button>
+                    <button onclick="decrease('${id}')">-</button>
                     <span id="qty-${id}">${qty}</span>
                     <button onclick="increase('${id}','${name}',${price})">+</button>
                 </div>
@@ -134,26 +237,70 @@ function showProducts(){
 function increase(id,name,price){
     if(!cart[id]) cart[id] = {name,price,qty:0};
     cart[id].qty++;
-    calculateTotal();
-    document.getElementById(`qty-${id}`).innerText = cart[id].qty;
-    document.getElementById('total').innerText = total;
     localStorage.setItem("cart", JSON.stringify(cart));
+    showProducts();
 }
 
 function decrease(id){
-    if(cart[id] && cart[id].qty > 0){
+    if(cart[id]){
         cart[id].qty--;
-        if(cart[id].qty === 0) delete cart[id];
-        calculateTotal();
-        document.getElementById(`qty-${id}`).innerText = cart[id] ? cart[id].qty : 0;
-        document.getElementById('total').innerText = total;
+        if(cart[id].qty <= 0) delete cart[id];
         localStorage.setItem("cart", JSON.stringify(cart));
+        showProducts();
     }
 }
 
+/* -------- CART PAGE -------- */
+
 function goToCart(){
-    alert("Cart feature working 👍");
+
+    let total = 0;
+    let bill = "";
+
+    for(let id in cart){
+        let item = cart[id];
+        let itemTotal = item.price * item.qty;
+        total += itemTotal;
+
+        bill += `${item.name} (${item.qty}) = ₹${itemTotal}<br>`;
+    }
+
+    document.getElementById('app').innerHTML = `
+        <div class="header">
+            <h2>Cart</h2>
+            <button class="danger" onclick="showProducts()">Back</button>
+        </div>
+
+        <div style="padding:20px;">
+            ${bill}
+            <hr>
+            <h3>Total Amount = ₹${total}</h3>
+            <hr>
+            <button class="success" onclick="placeOrder()">Place Order</button>
+        </div>
+    `;
 }
+
+/* -------- PLACE ORDER -------- */
+
+function placeOrder(){
+
+    fetch('/api/order',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({cart})
+    })
+    .then(() => {
+        alert("✅ Order placed successfully!");
+
+        cart = {};
+        localStorage.removeItem("cart");
+
+        showProducts();
+    });
+}
+
+/* -------- LOGOUT -------- */
 
 function logout(){
     localStorage.clear();
