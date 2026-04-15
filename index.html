@@ -38,16 +38,15 @@ button { padding:8px; border:none; border-radius:5px; cursor:pointer; }
     align-items:center;
 }
 
-/* PRODUCTS (FLEX FIX) */
+/* GRID LAYOUT */
 #products {
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
     gap:15px;
     padding:15px;
 }
 
-/* CARD (COMPACT FIXED) */
+/* CARD */
 .card {
     background:white;
     border-radius:10px;
@@ -56,36 +55,40 @@ button { padding:8px; border:none; border-radius:5px; cursor:pointer; }
     display:flex;
     flex-direction:column;
 
-    width:200px;
-    min-height:240px; /* ✅ compact height */
+    height:100%;
 }
 
-/* IMAGE */
+/* IMAGE FIX */
 .image-box {
-    height:100px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    width:100%;
+    height:140px;
+    overflow:hidden;
+    border-radius:8px;
 }
 
 .image-box img {
     width:100%;
     height:100%;
-    object-fit:contain;
+    object-fit:cover;
+}
+
+/* CONTENT */
+.card-content {
+    flex-grow:1;
+    text-align:center;
+    padding:5px 0;
 }
 
 /* TEXT */
 .card h3 {
     font-size:14px;
-    margin:4px 0;
-    text-align:center;
+    margin:5px 0;
 }
 
 .price {
     color:green;
     font-weight:bold;
-    text-align:center;
-    margin:2px 0;
+    margin:0;
 }
 
 /* QTY */
@@ -112,15 +115,6 @@ button { padding:8px; border:none; border-radius:5px; cursor:pointer; }
     background:white;
     padding:10px;
     text-align:center;
-}
-
-/* MOBILE */
-@media (max-width:600px){
-    .card { width:45%; }
-}
-
-@media (max-width:400px){
-    .card { width:90%; }
 }
 </style>
 </head>
@@ -288,8 +282,10 @@ function showProducts(){
                     <img src="${image}" onerror="this.src='/images/default.jpg'">
                 </div>
 
-                <h3>${name}</h3>
-                <p class="price">₹${price}</p>
+                <div class="card-content">
+                    <h3>${name}</h3>
+                    <p class="price">₹${price}</p>
+                </div>
 
                 <div class="qty">
                     <button onclick="decrease('${id}')">-</button>
