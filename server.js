@@ -4,17 +4,16 @@ const AWS = require('aws-sdk');
 const app = express();
 app.use(express.json());
 
-// ✅ Serve static files (images + html)
+// static files
 app.use(express.static(__dirname));
 
-// ✅ AWS Region (Singapore)
+// AWS config
 AWS.config.update({ region: 'ap-southeast-1' });
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
 
 /* PRODUCTS API */
 app.get('/api/products', (req, res) => {
-
     const products = [
         { id: "1", name: "Milk", price: 35 },
         { id: "2", name: "Bread", price: 50 },
@@ -28,37 +27,62 @@ app.get('/api/products', (req, res) => {
         { id: "10", name: "Shoes", price: 200 }
     ];
 
-    // ✅ FIXED: send clean JSON
     res.json(products);
 });
 
-/* SAVE ORDER */
+/* SAVE ORDER (FIXED) */
 app.post('/api/order', async (req, res) => {
 
     const cart = req.body.cart;
+
+    // ✅ 1. Validate cart
+    if (!cart || Object.keys(cart).length === 0) {
+        return res.status(400).json({ error: "Cart is empty" });
+    }
+
     const orderId = Date.now().toString();
 
+    // ✅ 2. Convert cart into clean array (IMPORTANT FIX)
+    let items = [];
     let total = 0;
 
     for (let id in cart) {
-        total += cart[id].price * cart[id].qty;
+        const item = cart[id];
+
+        const itemTotal = item.price * item.qty;
+        total += itemTotal;
+
+        items.push({
+            id: id,
+            name: item.name,
+            price: item.price,
+            qty: item.qty,
+            itemTotal: itemTotal
+        });
     }
+
+    // optional: get user details if stored in localStorage
+    const user = req.body.user || null;
 
     const params = {
         TableName: "Orders",
         Item: {
-            id: orderId, // ✅ primary key
-            cart: cart,
+            id: orderId,
+            items: items,
             total: total,
+            user: user,
             createdAt: new Date().toISOString()
         }
     };
 
     try {
         await dynamo.put(params).promise();
-        res.json({ message: "Order saved" });
+        res.json({
+            message: "Order saved successfully",
+            orderId: orderId
+        });
     } catch (err) {
-        console.error(err);
+        console.error("DynamoDB Error:", err);
         res.status(500).json({ error: "Failed to save order" });
     }
 });
