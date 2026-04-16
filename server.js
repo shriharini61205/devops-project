@@ -3,16 +3,14 @@ const AWS = require('aws-sdk');
 
 const app = express();
 app.use(express.json());
-
-// static files
 app.use(express.static(__dirname));
 
-// AWS config
+// AWS Region
 AWS.config.update({ region: 'ap-southeast-1' });
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
 
-/* PRODUCTS API */
+/* PRODUCTS */
 app.get('/api/products', (req, res) => {
     const products = [
         { id: "1", name: "Milk", price: 35 },
@@ -30,19 +28,17 @@ app.get('/api/products', (req, res) => {
     res.json(products);
 });
 
-/* SAVE ORDER (FIXED) */
+/* ORDER API (FIXED & SAFE) */
 app.post('/api/order', async (req, res) => {
 
-    const cart = req.body.cart;
+    const { cart, user } = req.body;
 
-    // ✅ 1. Validate cart
     if (!cart || Object.keys(cart).length === 0) {
         return res.status(400).json({ error: "Cart is empty" });
     }
 
     const orderId = Date.now().toString();
 
-    // ✅ 2. Convert cart into clean array (IMPORTANT FIX)
     let items = [];
     let total = 0;
 
@@ -53,16 +49,13 @@ app.post('/api/order', async (req, res) => {
         total += itemTotal;
 
         items.push({
-            id: id,
+            id,
             name: item.name,
             price: item.price,
             qty: item.qty,
-            itemTotal: itemTotal
+            itemTotal
         });
     }
-
-    // optional: get user details if stored in localStorage
-    const user = req.body.user || null;
 
     const params = {
         TableName: "Orders",
@@ -70,7 +63,8 @@ app.post('/api/order', async (req, res) => {
             id: orderId,
             items: items,
             total: total,
-            user: user,
+            user: user || {},
+            status: "PENDING",
             createdAt: new Date().toISOString()
         }
     };
