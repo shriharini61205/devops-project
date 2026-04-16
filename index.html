@@ -3,9 +3,12 @@
 <head>
 <title>My Store</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body { font-family: Arial; margin:0; background:#f1f3f6; }
 
+/* AUTH */
 .center {
     display:flex; justify-content:center; align-items:center;
     height:100vh;
@@ -25,38 +28,72 @@ button { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
 .success { background:green; color:white; width:100%; }
 .danger { background:red; color:white; }
 
+/* HEADER */
 .header {
     background:#2874f0; color:white;
     padding:15px; display:flex; justify-content:space-between;
 }
 
+/* ✅ GRID FIX */
 #products {
     display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-    gap:20px; padding:20px;
+    grid-template-columns: repeat(5, 1fr);
+    gap:20px;
+    padding:20px;
 }
 
+/* ✅ CARD FIX */
 .card {
-    background:white; padding:15px;
-    border-radius:10px; text-align:center;
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    text-align:center;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+
+    height:260px;
 }
 
+/* IMAGE */
 .card img {
     width:100%;
-    height:150px;
+    height:120px;
     object-fit:cover;
     border-radius:8px;
 }
 
+/* TEXT */
 .price { color:green; font-weight:bold; }
 
-.qty { display:flex; justify-content:center; gap:10px; margin-top:10px; }
+/* QTY */
+.qty {
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-top:8px;
+}
 
 .qty button { background:#2874f0; color:white; }
 
+/* CART BAR */
 .cart-bar {
     position:fixed; bottom:0; width:100%;
     background:white; padding:10px; text-align:center;
+}
+
+/* 📱 RESPONSIVE */
+@media (max-width: 1024px) {
+    #products { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 600px) {
+    #products { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 400px) {
+    #products { grid-template-columns: repeat(1, 1fr); }
 }
 </style>
 </head>
@@ -72,7 +109,7 @@ let total = 0;
 
 showAuth();
 
-/* -------- AUTH -------- */
+/* AUTH */
 
 function showAuth(){
     document.getElementById('app').innerHTML = `
@@ -143,7 +180,7 @@ function login(){
     }
 }
 
-/* -------- DETAILS -------- */
+/* DETAILS */
 
 function showDetails(){
     document.getElementById('app').innerHTML = `
@@ -172,7 +209,7 @@ function saveDetails(){
     showProducts();
 }
 
-/* -------- PRODUCTS -------- */
+/* PRODUCTS */
 
 function calculateTotal(){
     total = 0;
@@ -184,7 +221,7 @@ function calculateTotal(){
 function showProducts(){
     document.getElementById('app').innerHTML = `
         <div class="header">
-            <h2>My Store</h2>
+            <h2>Ecommerce-World</h2>
             <button class="danger" onclick="logout()">Logout</button>
         </div>
 
@@ -209,8 +246,6 @@ function showProducts(){
             let price = item.price;
 
             let qty = cart[id] ? cart[id].qty : 0;
-
-            /* ✅ FIXED IMAGE PATH */
             let image = "/images/" + name.toLowerCase() + ".jpg";
 
             let div = document.createElement('div');
@@ -236,7 +271,7 @@ function showProducts(){
     });
 }
 
-/* -------- CART -------- */
+/* CART */
 
 function increase(id,name,price){
     if(!cart[id]) cart[id] = {name,price,qty:0};
@@ -268,7 +303,7 @@ function decrease(id){
     }
 }
 
-/* -------- CART PAGE -------- */
+/* CART PAGE */
 
 function goToCart(){
     let cartData = JSON.parse(localStorage.getItem("cart")) || {};
@@ -303,7 +338,7 @@ function goToCart(){
     document.getElementById('app').innerHTML = html;
 }
 
-/* -------- ORDER -------- */
+/* ORDER */
 
 function placeOrder(){
     fetch('/api/order',{
@@ -319,7 +354,7 @@ function placeOrder(){
     });
 }
 
-/* -------- LOGOUT -------- */
+/* LOGOUT */
 
 function logout(){
     localStorage.clear();
