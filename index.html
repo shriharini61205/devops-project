@@ -34,10 +34,10 @@ button { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
     padding:15px; display:flex; justify-content:space-between;
 }
 
-/* ✅ GRID FIX */
+/* ✅ FINAL GRID FIX */
 #products {
     display:grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap:20px;
     padding:20px;
 }
@@ -51,49 +51,46 @@ button { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
 
     display:flex;
     flex-direction:column;
-    justify-content:space-between;
 
-    height:260px;
+    height:auto; /* 🔥 no fixed height */
 }
 
 /* IMAGE */
 .card img {
     width:100%;
-    height:120px;
+    height:140px;
     object-fit:cover;
     border-radius:8px;
 }
 
 /* TEXT */
-.price { color:green; font-weight:bold; }
+.price {
+    color:green;
+    font-weight:bold;
+    margin:5px 0;
+}
 
-/* QTY */
+/* ✅ QTY ALWAYS VISIBLE */
 .qty {
     display:flex;
     justify-content:center;
     gap:10px;
-    margin-top:8px;
+    margin-top:10px;
 }
 
-.qty button { background:#2874f0; color:white; }
+.qty button {
+    background:#2874f0;
+    color:white;
+}
 
 /* CART BAR */
 .cart-bar {
-    position:fixed; bottom:0; width:100%;
-    background:white; padding:10px; text-align:center;
-}
-
-/* 📱 RESPONSIVE */
-@media (max-width: 1024px) {
-    #products { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (max-width: 600px) {
-    #products { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 400px) {
-    #products { grid-template-columns: repeat(1, 1fr); }
+    position:fixed;
+    bottom:0;
+    width:100%;
+    background:white;
+    padding:10px;
+    text-align:center;
 }
 </style>
 </head>
@@ -221,7 +218,7 @@ function calculateTotal(){
 function showProducts(){
     document.getElementById('app').innerHTML = `
         <div class="header">
-            <h2>Ecommerce-World</h2>
+            <h2>My Store</h2>
             <button class="danger" onclick="logout()">Logout</button>
         </div>
 
@@ -246,6 +243,7 @@ function showProducts(){
             let price = item.price;
 
             let qty = cart[id] ? cart[id].qty : 0;
+
             let image = "/images/" + name.toLowerCase() + ".jpg";
 
             let div = document.createElement('div');
