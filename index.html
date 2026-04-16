@@ -2,7 +2,6 @@
 <html>
 <head>
 <title>My Store</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -13,7 +12,6 @@ body {
     padding-bottom: 80px;
 }
 
-/* AUTH */
 .center {
     display:flex;
     justify-content:center;
@@ -47,7 +45,6 @@ button {
 .success { background:green; color:white; width:100%; }
 .danger { background:red; color:white; }
 
-/* HEADER */
 .header {
     background:#2874f0;
     color:white;
@@ -56,7 +53,6 @@ button {
     justify-content:space-between;
 }
 
-/* GRID FIX - 5 ITEMS PER ROW */
 #products {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -65,7 +61,6 @@ button {
     padding-bottom: 120px;
 }
 
-/* RESPONSIVE */
 @media (max-width: 1200px) {
     #products { grid-template-columns: repeat(3, 1fr); }
 }
@@ -76,22 +71,17 @@ button {
     #products { grid-template-columns: repeat(1, 1fr); }
 }
 
-/* CARD */
 .card {
     background:white;
     padding:15px;
     border-radius:10px;
     text-align:center;
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
 }
 
 .card img {
     width:100%;
     height:140px;
     object-fit:cover;
-    border-radius:8px;
 }
 
 .price {
@@ -99,7 +89,6 @@ button {
     font-weight:bold;
 }
 
-/* QTY */
 .qty {
     display:flex;
     justify-content:center;
@@ -112,7 +101,6 @@ button {
     color:white;
 }
 
-/* CART BAR */
 .cart-bar {
     position:fixed;
     bottom:0;
@@ -121,7 +109,6 @@ button {
     background:white;
     padding:15px;
     text-align:center;
-    z-index:1000;
     box-shadow:0 -2px 8px rgba(0,0,0,0.1);
 }
 </style>
@@ -177,11 +164,6 @@ function signup(){
     let email = document.getElementById('email').value.trim();
     let password = document.getElementById('password').value.trim();
 
-    if(!email || !password){
-        alert("Fill all fields");
-        return;
-    }
-
     localStorage.setItem("userEmail", email);
     localStorage.setItem("userPassword", password);
 
@@ -219,12 +201,8 @@ function saveDetails(){
     let phone = document.getElementById('phone').value.trim();
     let address = document.getElementById('address').value.trim();
 
-    if(!name || !phone || !address){
-        alert("Fill all details");
-        return;
-    }
-
     localStorage.setItem("details", JSON.stringify({name,phone,address}));
+
     showProducts();
 }
 
@@ -260,24 +238,22 @@ function showProducts(){
         data.forEach(item => {
 
             let id = item.id;
-            let name = item.name;
-            let price = item.price;
-
             let qty = cart[id] ? cart[id].qty : 0;
-            let image = "/images/" + name.toLowerCase() + ".jpg";
 
             let div = document.createElement('div');
             div.className = "card";
 
             div.innerHTML = `
-                <img src="${image}" onerror="this.src='/images/default.jpg'">
-                <h3>${name}</h3>
-                <p class="price">₹${price}</p>
+                <img src="/images/${item.name.toLowerCase()}.jpg"
+                     onerror="this.src='/images/default.jpg'">
+
+                <h3>${item.name}</h3>
+                <p class="price">₹${item.price}</p>
 
                 <div class="qty">
                     <button onclick="decrease('${id}')">-</button>
                     <span id="qty-${id}">${qty}</span>
-                    <button onclick="increase('${id}','${name}',${price})">+</button>
+                    <button onclick="increase('${id}','${item.name}',${item.price})">+</button>
                 </div>
             `;
 
@@ -304,10 +280,10 @@ function increase(id,name,price){
 }
 
 function decrease(id){
-    if(cart[id] && cart[id].qty > 0){
+    if(cart[id]){
         cart[id].qty--;
 
-        if(cart[id].qty === 0){
+        if(cart[id].qty <= 0){
             delete cart[id];
         }
 
@@ -322,40 +298,9 @@ function decrease(id){
     }
 }
 
-/* 🔥 FIXED PLACE ORDER */
-function placeOrder(){
-
-    let userDetails = JSON.parse(localStorage.getItem("details")) || {};
-
-    fetch('/api/order',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-            cart: cart,
-            user: userDetails
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        console.log("Order Response:", data);
-
-        alert("✅ Order Placed Successfully!");
-
-        cart = {};
-        total = 0;
-        localStorage.removeItem("cart");
-
-        showProducts();
-    })
-    .catch(err => {
-        console.error(err);
-        alert("❌ Order Failed");
-    });
-}
-
 /* CART PAGE */
 function goToCart(){
+
     let cartData = JSON.parse(localStorage.getItem("cart")) || {};
     let total = 0;
 
@@ -386,6 +331,47 @@ function goToCart(){
     `;
 
     document.getElementById('app').innerHTML = html;
+}
+
+/* 🔥 FIXED PLACE ORDER */
+function placeOrder(){
+
+    let userDetails = JSON.parse(localStorage.getItem("details")) || {};
+
+    console.log("Sending order...");
+    console.log("Cart:", cart);
+    console.log("User:", userDetails);
+
+    fetch('/api/order',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+            cart: cart,
+            user: userDetails
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        console.log("Response:", data);
+
+        if(data.error){
+            alert("❌ " + data.error);
+            return;
+        }
+
+        alert("✅ Order Placed Successfully! ID: " + data.orderId);
+
+        cart = {};
+        total = 0;
+        localStorage.removeItem("cart");
+
+        showProducts();
+    })
+    .catch(err => {
+        console.error(err);
+        alert("❌ Order Failed");
+    });
 }
 
 /* LOGOUT */

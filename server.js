@@ -2,15 +2,24 @@ const express = require('express');
 const AWS = require('aws-sdk');
 
 const app = express();
+
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// AWS Region
-AWS.config.update({ region: 'ap-southeast-1' });
+/* AWS CONFIG */
+AWS.config.update({
+    region: 'ap-southeast-1'
+});
 
+// IMPORTANT: Works only if IAM Role OR aws configure is done
 const dynamo = new AWS.DynamoDB.DocumentClient();
 
-/* PRODUCTS */
+/* TEST ROUTE */
+app.get('/test', (req, res) => {
+    res.json({ message: "Server is working fine 🚀" });
+});
+
+/* PRODUCTS API */
 app.get('/api/products', (req, res) => {
     const products = [
         { id: "1", name: "Milk", price: 35 },
@@ -28,8 +37,10 @@ app.get('/api/products', (req, res) => {
     res.json(products);
 });
 
-/* ORDER API (FIXED & SAFE) */
+/* ORDER API - FULL FIXED */
 app.post('/api/order', async (req, res) => {
+    console.log("📦 ORDER API HIT");
+    console.log("BODY:", req.body);
 
     const { cart, user } = req.body;
 
@@ -70,15 +81,28 @@ app.post('/api/order', async (req, res) => {
     };
 
     try {
+        console.log("💾 Saving to DynamoDB...");
+
         await dynamo.put(params).promise();
+
+        console.log("✅ Order saved successfully!");
+
         res.json({
             message: "Order saved successfully",
             orderId: orderId
         });
+
     } catch (err) {
-        console.error("DynamoDB Error:", err);
-        res.status(500).json({ error: "Failed to save order" });
+        console.error("❌ DynamoDB Error:", err);
+
+        res.status(500).json({
+            error: "Failed to save order",
+            details: err.message
+        });
     }
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+/* START SERVER */
+app.listen(3000, () => {
+    console.log("🚀 Server running on port 3000");
+});
