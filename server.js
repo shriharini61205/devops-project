@@ -1,17 +1,21 @@
 const express = require('express');
 const AWS = require('aws-sdk');
+const path = require('path');
 
 const app = express();
 
+/* MIDDLEWARE */
 app.use(express.json());
-app.use(express.static(__dirname));
+
+// 🔥 FIX: Serve static files properly (IMPORTANT FOR IMAGES)
+app.use(express.static(path.join(__dirname)));
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 /* AWS CONFIG */
 AWS.config.update({
     region: 'ap-southeast-1'
 });
 
-// IMPORTANT: Works only if IAM Role OR aws configure is done
 const dynamo = new AWS.DynamoDB.DocumentClient();
 
 /* TEST ROUTE */
@@ -37,7 +41,7 @@ app.get('/api/products', (req, res) => {
     res.json(products);
 });
 
-/* ORDER API - FULL FIXED */
+/* ORDER API */
 app.post('/api/order', async (req, res) => {
     console.log("📦 ORDER API HIT");
     console.log("BODY:", req.body);
@@ -53,6 +57,7 @@ app.post('/api/order', async (req, res) => {
     let items = [];
     let total = 0;
 
+    // 🔥 CLEAN ITEM STRUCTURE
     for (let id in cart) {
         const item = cart[id];
 
@@ -60,11 +65,12 @@ app.post('/api/order', async (req, res) => {
         total += itemTotal;
 
         items.push({
-    name: item.name,
-    qty: item.qty,
-    price: item.price,
-    itemTotal: item.qty * item.price
-});
+            name: item.name,
+            qty: item.qty,
+            price: item.price,
+            itemTotal: itemTotal
+        });
+    }
 
     const params = {
         TableName: "Orders",
@@ -80,7 +86,6 @@ app.post('/api/order', async (req, res) => {
 
     try {
         console.log("💾 Saving to DynamoDB...");
-
         await dynamo.put(params).promise();
 
         console.log("✅ Order saved successfully!");
@@ -91,7 +96,7 @@ app.post('/api/order', async (req, res) => {
         });
 
     } catch (err) {
-        console.error("❌ DynamoDB Error:", err);
+        console.error("❌ FULL DYNAMODB ERROR:", JSON.stringify(err, null, 2));
 
         res.status(500).json({
             error: "Failed to save order",
@@ -101,6 +106,6 @@ app.post('/api/order', async (req, res) => {
 });
 
 /* START SERVER */
-app.listen(3000, () => {
+app.listen(3000, "0.0.0.0", () => {
     console.log("🚀 Server running on port 3000");
 });
