@@ -60,13 +60,11 @@ app.post('/api/order', async (req, res) => {
         total += itemTotal;
 
         items.push({
-            id,
-            name: item.name,
-            price: item.price,
-            qty: item.qty,
-            itemTotal
-        });
-    }
+    name: item.name,
+    qty: item.qty,
+    price: item.price,
+    itemTotal: item.qty * item.price
+});
 
     const params = {
         TableName: "Orders",
