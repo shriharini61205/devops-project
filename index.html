@@ -230,7 +230,7 @@ function placeOrder(){
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-            cart: cart,
+            cart: Object.values(cart),   // ✅ FIX
             user: JSON.parse(localStorage.getItem("details"))
         })
     })
