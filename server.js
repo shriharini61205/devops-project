@@ -24,7 +24,7 @@ app.get('/test', (req, res) => {
 app.get('/api/products', (req, res) => {
     res.json([
 
-        // 🍎 FRUITS
+        // FRUITS
         { id:"1", name:"Banana", price:20, category:"fruits", image:"fruits/banana.jpg" },
         { id:"2", name:"Apple", price:150, category:"fruits", image:"fruits/apple.jpg" },
         { id:"3", name:"Mango", price:120, category:"fruits", image:"fruits/mango.jpg" },
@@ -36,7 +36,7 @@ app.get('/api/products', (req, res) => {
         { id:"9", name:"Kiwi", price:200, category:"fruits", image:"fruits/kiwi.jpg" },
         { id:"10", name:"Guava", price:40, category:"fruits", image:"fruits/guava.jpg" },
 
-        // 🛒 GROCERY
+        // GROCERY
         { id:"11", name:"Milk", price:35, category:"grocery", image:"grocery/milk.jpg" },
         { id:"12", name:"Mushroom", price:50, category:"grocery", image:"grocery/mushroom.jpg" },
         { id:"13", name:"Oats", price:60, category:"grocery", image:"grocery/oats.jpg" },
@@ -48,7 +48,7 @@ app.get('/api/products', (req, res) => {
         { id:"19", name:"Panner", price:30, category:"grocery", image:"grocery/panner.jpg" },
         { id:"20", name:"Wheat", price:40, category:"grocery", image:"grocery/wheat.jpg" },
 
-        // 🍪 SNACKS
+        // SNACKS
         { id:"21", name:"Chips", price:20, category:"snacks", image:"snacks/chips.jpg" },
         { id:"22", name:"Cookies", price:40, category:"snacks", image:"snacks/cookies.jpg" },
         { id:"23", name:"Popcorn", price:50, category:"snacks", image:"snacks/popcorn.jpg" },
@@ -60,7 +60,7 @@ app.get('/api/products', (req, res) => {
         { id:"29", name:"Pizza", price:150, category:"snacks", image:"snacks/pizza.jpg" },
         { id:"30", name:"Fries", price:90, category:"snacks", image:"snacks/fries.jpg" },
 
-        // 🌶️ SPICES
+        // SPICES
         { id:"31", name:"Turmeric", price:30, category:"spices", image:"spices/turmeric.jpg" },
         { id:"32", name:"Chili Powder", price:40, category:"spices", image:"spices/chili.jpg" },
         { id:"33", name:"Coriander", price:35, category:"spices", image:"spices/coriander.jpg" },
@@ -73,6 +73,59 @@ app.get('/api/products', (req, res) => {
         { id:"40", name:"Cinnamon", price:90, category:"spices", image:"spices/cinnamon.jpg" }
 
     ]);
+});
+
+/* ORDER API ✅ */
+app.post('/api/order', async (req, res) => {
+
+    const { cart, user } = req.body;
+
+    if (!cart || Object.keys(cart).length === 0) {
+        return res.status(400).json({ error: "Cart is empty" });
+    }
+
+    const orderId = Date.now().toString();
+
+    let items = [];
+    let total = 0;
+
+    for (let id in cart) {
+        const item = cart[id];
+        const itemTotal = item.price * item.qty;
+
+        total += itemTotal;
+
+        items.push({
+            name: item.name,
+            qty: item.qty,
+            price: item.price,
+            itemTotal
+        });
+    }
+
+    const params = {
+        TableName: "Orders",
+        Item: {
+            id: orderId,
+            user: user || {},
+            items: items,
+            total: total,
+            createdAt: new Date().toISOString()
+        }
+    };
+
+    try {
+        await dynamo.put(params).promise();
+
+        res.json({
+            message: "Order placed successfully",
+            orderId: orderId
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "DynamoDB Error" });
+    }
 });
 
 /* SERVER */

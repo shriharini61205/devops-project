@@ -316,6 +316,7 @@ function goToCart(){
 }
 
 /* ORDER */
+<script>
 function placeOrder(){
     fetch('/api/order',{
         method:'POST',
@@ -325,16 +326,16 @@ function placeOrder(){
             user: JSON.parse(localStorage.getItem("details"))
         })
     })
-    .then(res => res.json())
-    .then(data => {
+    .then(async res => {
+        let data = await res.json();
 
-        console.log("SERVER RESPONSE:", data); // 👈 ADD THIS
-
-        if(data.error){
-            alert("❌ " + data.error);
-            return;
+        if(!res.ok){
+            throw new Error(data.error || "Order failed");
         }
 
+        return data;
+    })
+    .then(data => {
         alert("✅ Order placed! ID: " + data.orderId);
 
         localStorage.removeItem("cart");
@@ -343,9 +344,10 @@ function placeOrder(){
     })
     .catch(err => {
         console.error(err);
-        alert("❌ Order failed");
+        alert("❌ " + err.message);
     });
 }
+</script>
 
 function logout(){
     localStorage.clear();
