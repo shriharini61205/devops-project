@@ -192,7 +192,7 @@ function calculateTotal(){
 function showProducts(){
     document.getElementById('app').innerHTML = `
         <div class="header">
-            <h2>My Store</h2>
+            <h2>Daily Mart</h2>
             <div>
                 <select id="categoryFilter" onchange="filterProducts()">
                     <option value="all">All</option>
@@ -327,12 +327,24 @@ function placeOrder(){
     })
     .then(res => res.json())
     .then(data => {
+
+        console.log("SERVER RESPONSE:", data); // 👈 ADD THIS
+
+        if(data.error){
+            alert("❌ " + data.error);
+            return;
+        }
+
         alert("✅ Order placed! ID: " + data.orderId);
+
         localStorage.removeItem("cart");
         cart = {};
         showProducts();
     })
-    .catch(() => alert("❌ Order failed"));
+    .catch(err => {
+        console.error(err);
+        alert("❌ Order failed");
+    });
 }
 
 function logout(){
