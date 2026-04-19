@@ -1,142 +1,139 @@
-<!DOCTYPE html>
+const express = require('express');
+const AWS = require('aws-sdk');
 
-<html>
-<head>
-<title>Daily Mart</title>
+const app = express();
 
-<style>
-body { font-family: Arial; margin:0; background:#f1f3f6; }
+/* ================= MIDDLEWARE ================= */
+app.use(express.json());
+app.use(express.static(__dirname));
+app.use('/images', express.static(__dirname + '/images'));
 
-.header { background:#2874f0; color:white; padding:15px; display:flex; justify-content:space-between; }
-
-#products {
- display:grid;
- grid-template-columns:repeat(5,1fr);
- gap:20px;
- padding:20px;
-}
-
-.card { background:white; padding:10px; text-align:center; border-radius:10px; }
-
-.card img { width:100%; height:140px; object-fit:cover; }
-
-.cart-bar {
- position:fixed;
- bottom:0;
- width:100%;
- background:white;
- padding:15px;
- text-align:center;
-}
-</style>
-
-</head>
-
-<body>
-
-<div id="app"></div>
-
-<script>
-let cart = {};
-
-showProducts();
-
-function showProducts(){
- document.getElementById('app').innerHTML = `
- <div class="header">
-   <h2>Daily Mart</h2>
-   <button onclick="goToCart()">Cart</button>
- </div>
- <div id="products"></div>
- <div class="cart-bar">
-   Total: ₹<span id="total">0</span>
- </div>
- `;
-
- fetch('/api/products')
- .then(res=>res.json())
- .then(data=>{
-   let container=document.getElementById('products');
-   data.forEach(p=>{
-     let div=document.createElement('div');
-     div.className="card";
-     div.innerHTML=`
-     <img src="/images/${p.image}">
-     <h4>${p.name}</h4>
-     <p>₹${p.price}</p>
-     <button onclick="add('${p.id}','${p.name}',${p.price})">Add</button>
-     `;
-     container.appendChild(div);
-   });
- });
-}
-
-function add(id,name,price){
- if(!cart[id]) cart[id]={name,price,qty:0};
- cart[id].qty++;
- updateTotal();
-}
-
-function updateTotal(){
- let total=0;
- for(let id in cart){
-   total+=cart[id].price*cart[id].qty;
- }
- document.getElementById('total').innerText=total;
-}
-
-function goToCart(){
- let total=0;
-
- let html=`<div class="header">
- <h2>Cart</h2>
- <button onclick="showProducts()">Back</button>
- </div>
-
- <div style="padding:20px;font-family:monospace;"><pre>
-Product Name        Qty     Price
---------------------------------
-`;
-
- for(let id in cart){
-   let item=cart[id];
-   let t=item.price*item.qty;
-   total+=t;
-
-   html+=`${item.name.padEnd(20)} ${item.qty.toString().padEnd(6)} ${t}\n`;
- }
-
- html+=`--------------------------------
-Total Amount = ${total}
---------------------------------
-</pre>
-
-<button onclick="placeOrder()">Place Order</button>
-
-</div>`;
-
-document.getElementById('app').innerHTML=html;
-}
-
-function placeOrder(){
-fetch('/api/order',{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({cart})
-})
-.then(res=>{
-if(!res.ok) throw new Error();
-return res.json();
-})
-.then(data=>{
-alert("✅ Order placed successfully!");
-cart={};
-showProducts();
-})
-.catch(()=>{
-alert("❌ Order failed");
+/* ================= AWS CONFIG ================= */
+AWS.config.update({
+region: 'ap-southeast-1'
 });
-} </script>
 
-</body>
-</html>
+const dynamo = new AWS.DynamoDB.DocumentClient();
+
+/* ================= TEST API ================= */
+app.get('/test', (req, res) => {
+res.json({ message: "Server is working fine 🚀" });
+});
+
+/* ================= PRODUCTS API (40 ITEMS) ================= */
+app.get('/api/products', (req, res) => {
+res.json([
+
+```
+    // 🍎 FRUITS
+    { id:"1", name:"Banana", price:20, category:"fruits", image:"fruits/banana.jpg" },
+    { id:"2", name:"Apple", price:150, category:"fruits", image:"fruits/apple.jpg" },
+    { id:"3", name:"Mango", price:120, category:"fruits", image:"fruits/mango.jpg" },
+    { id:"4", name:"Orange", price:80, category:"fruits", image:"fruits/orange.jpg" },
+    { id:"5", name:"Grapes", price:90, category:"fruits", image:"fruits/grapes.jpg" },
+    { id:"6", name:"Pineapple", price:70, category:"fruits", image:"fruits/pineapple.jpg" },
+    { id:"7", name:"Papaya", price:60, category:"fruits", image:"fruits/papaya.jpg" },
+    { id:"8", name:"Watermelon", price:50, category:"fruits", image:"fruits/watermelon.jpg" },
+    { id:"9", name:"Kiwi", price:200, category:"fruits", image:"fruits/kiwi.jpg" },
+    { id:"10", name:"Guava", price:40, category:"fruits", image:"fruits/guava.jpg" },
+
+    // 🛒 GROCERY
+    { id:"11", name:"Milk", price:35, category:"grocery", image:"grocery/milk.jpg" },
+    { id:"12", name:"Mushroom", price:50, category:"grocery", image:"grocery/mushroom.jpg" },
+    { id:"13", name:"Oats", price:60, category:"grocery", image:"grocery/oats.jpg" },
+    { id:"14", name:"Oil", price:120, category:"grocery", image:"grocery/oil.jpg" },
+    { id:"15", name:"Sugar", price:45, category:"grocery", image:"grocery/sugar.jpg" },
+    { id:"16", name:"Salt", price:20, category:"grocery", image:"grocery/salt.jpg" },
+    { id:"17", name:"Tea", price:150, category:"grocery", image:"grocery/tea.jpg" },
+    { id:"18", name:"Coffee", price:200, category:"grocery", image:"grocery/coffee.jpg" },
+    { id:"19", name:"Paneer", price:120, category:"grocery", image:"grocery/paneer.jpg" },
+    { id:"20", name:"Wheat", price:40, category:"grocery", image:"grocery/wheat.jpg" },
+
+    // 🍪 SNACKS
+    { id:"21", name:"Chips", price:20, category:"snacks", image:"snacks/chips.jpg" },
+    { id:"22", name:"Cookies", price:40, category:"snacks", image:"snacks/cookies.jpg" },
+    { id:"23", name:"Popcorn", price:50, category:"snacks", image:"snacks/popcorn.jpg" },
+    { id:"24", name:"Nachos", price:60, category:"snacks", image:"snacks/nachos.jpg" },
+    { id:"25", name:"Chocolate", price:80, category:"snacks", image:"snacks/chocolate.jpg" },
+    { id:"26", name:"Cupcake", price:70, category:"snacks", image:"snacks/cupcake.jpg" },
+    { id:"27", name:"Donut", price:60, category:"snacks", image:"snacks/donut.jpg" },
+    { id:"28", name:"Burger", price:120, category:"snacks", image:"snacks/burger.jpg" },
+    { id:"29", name:"Pizza", price:150, category:"snacks", image:"snacks/pizza.jpg" },
+    { id:"30", name:"Fries", price:90, category:"snacks", image:"snacks/fries.jpg" },
+
+    // 🌶️ SPICES
+    { id:"31", name:"Turmeric", price:30, category:"spices", image:"spices/turmeric.jpg" },
+    { id:"32", name:"Chili Powder", price:40, category:"spices", image:"spices/chili.jpg" },
+    { id:"33", name:"Coriander", price:35, category:"spices", image:"spices/coriander.jpg" },
+    { id:"34", name:"Cumin", price:50, category:"spices", image:"spices/cumin.jpg" },
+    { id:"35", name:"Garam Masala", price:60, category:"spices", image:"spices/garammasala.jpg" },
+    { id:"36", name:"Pepper", price:70, category:"spices", image:"spices/pepper.jpg" },
+    { id:"37", name:"Mustard", price:25, category:"spices", image:"spices/mustard.jpg" },
+    { id:"38", name:"Cardamom", price:120, category:"spices", image:"spices/cardamom.jpg" },
+    { id:"39", name:"Cloves", price:110, category:"spices", image:"spices/cloves.jpg" },
+    { id:"40", name:"Cinnamon", price:90, category:"spices", image:"spices/cinnamon.jpg" }
+
+]);
+```
+
+});
+
+/* ================= ORDER API ================= */
+app.post('/api/order', async (req, res) => {
+try {
+const { cart, user } = req.body;
+
+```
+    if (!cart || Object.keys(cart).length === 0) {
+        return res.status(400).json({ error: "Cart is empty" });
+    }
+
+    const orderId = Date.now().toString();
+
+    let items = [];
+    let total = 0;
+
+    for (let id in cart) {
+        const item = cart[id];
+        const itemTotal = item.price * item.qty;
+
+        total += itemTotal;
+
+        items.push({
+            name: item.name,
+            qty: item.qty,
+            price: item.price,
+            itemTotal: itemTotal
+        });
+    }
+
+    const params = {
+        TableName: "Orders",
+        Item: {
+            id: orderId,
+            user: user || {},
+            items: items,
+            total: total,
+            createdAt: new Date().toISOString()
+        }
+    };
+
+    await dynamo.put(params).promise();
+
+    res.json({
+        success: true,
+        orderId: orderId
+    });
+
+} catch (err) {
+    console.error("❌ ERROR:", err);
+    res.status(500).json({ error: err.message });
+}
+```
+
+});
+
+/* ================= SERVER ================= */
+app.listen(3000, "0.0.0.0", () => {
+console.log("🚀 Server running on port 3000");
+});
