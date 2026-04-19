@@ -15,7 +15,7 @@ region: 'ap-southeast-1'
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
 
-/* TEST */
+/* TEST API */
 app.get('/test', (req, res) => {
 res.json({ message: "Server is working fine 🚀" });
 });
@@ -30,10 +30,11 @@ res.json([
 
 /* ORDER API */
 app.post('/api/order', async (req, res) => {
-try {
-const { cart, user } = req.body;
 
 ```
+try {
+    const { cart, user } = req.body;
+
     if (!cart || Object.keys(cart).length === 0) {
         return res.status(400).json({ error: "Cart is empty" });
     }
