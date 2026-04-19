@@ -22,7 +22,10 @@ res.json({ message: "Server is working fine 🚀" });
 
 /* PRODUCTS API */
 app.get('/api/products', (req, res) => {
-res.json(require('./products.json')); // optional improvement
+res.json([
+{ id:"1", name:"Banana", price:20, image:"fruits/banana.jpg" },
+{ id:"2", name:"Apple", price:150, image:"fruits/apple.jpg" }
+]);
 });
 
 /* ORDER API */
@@ -50,7 +53,7 @@ const { cart, user } = req.body;
             name: item.name,
             qty: item.qty,
             price: item.price,
-            itemTotal
+            itemTotal: itemTotal
         });
     }
 
@@ -73,7 +76,7 @@ const { cart, user } = req.body;
     });
 
 } catch (err) {
-    console.error("❌ ERROR:", err);
+    console.error("ERROR:", err);
     res.status(500).json({ error: err.message });
 }
 ```
