@@ -7,9 +7,7 @@ app.use(express.json());
 app.use(express.static(__dirname));
 app.use('/images', express.static(__dirname + '/images'));
 
-AWS.config.update({
-    region: 'ap-southeast-1'
-});
+AWS.config.update({ region: 'ap-southeast-1' });
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
 
@@ -65,7 +63,6 @@ app.get('/api/products', (req, res) => {
 /* ORDER */
 app.post('/api/order', async (req, res) => {
     try {
-
         const { cart } = req.body;
 
         if (!cart || Object.keys(cart).length === 0) {

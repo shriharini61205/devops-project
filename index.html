@@ -5,16 +5,11 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- PDF LIBRARY (NO INSTALL) -->
+<!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body {
-    font-family: Arial;
-    margin:0;
-    background:#f1f3f6;
-    padding-bottom:80px;
-}
+body { font-family: Arial; margin:0; background:#f1f3f6; padding-bottom:80px; }
 
 .header {
     background:#2874f0;
@@ -22,6 +17,7 @@ body {
     padding:15px;
     display:flex;
     justify-content:space-between;
+    align-items:center;
 }
 
 #products {
@@ -41,8 +37,7 @@ body {
 .card img {
     width:100%;
     height:150px;
-    object-fit:contain; /* FIXED */
-    background:white;
+    object-fit:contain;
 }
 
 button {
@@ -50,9 +45,18 @@ button {
     margin:5px;
     cursor:pointer;
     border:none;
+    border-radius:5px;
     background:#2874f0;
     color:white;
-    border-radius:5px;
+}
+
+#cartBtn {
+    background:#ff9800;
+    font-weight:bold;
+}
+
+#cartBtn.active {
+    background:red;
 }
 
 .cart-bar {
@@ -62,7 +66,21 @@ button {
     background:white;
     padding:10px;
     text-align:center;
-    box-shadow:0 -2px 8px rgba(0,0,0,0.1);
+}
+
+.center {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.box {
+    background:white;
+    padding:30px;
+    border-radius:10px;
+    text-align:center;
+    width:300px;
 }
 
 .bill-box {
@@ -75,7 +93,6 @@ button {
 </head>
 
 <body>
-
 <div id="app"></div>
 
 <script>
@@ -83,14 +100,67 @@ button {
 let cart = {};
 let allProducts = [];
 
-loadProducts();
+showAuth();
 
-/* LOAD PRODUCTS */
+/* AUTH */
+function showAuth(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="box">
+            <h2>Welcome</h2>
+            <button onclick="showLogin()">Login</button><br><br>
+            <button onclick="showSignup()">Signup</button>
+        </div>
+    </div>`;
+}
+
+function showLogin(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="box">
+            <h2>Login</h2>
+            <input id="email" placeholder="Email"><br>
+            <input id="password" type="password" placeholder="Password"><br>
+            <button onclick="login()">Login</button>
+        </div>
+    </div>`;
+}
+
+function showSignup(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="box">
+            <h2>Signup</h2>
+            <input id="email" placeholder="Email"><br>
+            <input id="password" type="password" placeholder="Password"><br>
+            <button onclick="signup()">Signup</button>
+        </div>
+    </div>`;
+}
+
+function signup(){
+    localStorage.setItem("email", email.value);
+    localStorage.setItem("password", password.value);
+    alert("Signup success");
+    showLogin();
+}
+
+function login(){
+    if(email.value === localStorage.getItem("email") &&
+       password.value === localStorage.getItem("password")){
+        loadProducts();
+    } else {
+        alert("Invalid credentials");
+    }
+}
+
+/* PRODUCTS */
 function loadProducts(){
+
     document.getElementById('app').innerHTML = `
     <div class="header">
         <h2>Daily Mart</h2>
-        <button onclick="goToCart()">Cart</button>
+        <button id="cartBtn" onclick="goToCart()">🛒 (<span id="cartCount">0</span>)</button>
     </div>
 
     <div id="products"></div>
@@ -108,7 +178,6 @@ function loadProducts(){
     });
 }
 
-/* RENDER */
 function renderProducts(){
 
     let scroll = window.scrollY;
@@ -124,10 +193,9 @@ function renderProducts(){
         div.className = "card";
 
         div.innerHTML = `
-            <img src="/images/${item.image}" onerror="this.src='/images/default.jpg'">
+            <img src="/images/${item.image}">
             <h4>${item.name}</h4>
             <p>₹${item.price}</p>
-
             <button onclick="decrease('${item.id}')">-</button>
             ${qty}
             <button onclick="increase('${item.id}','${item.name}',${item.price})">+</button>
@@ -137,6 +205,8 @@ function renderProducts(){
     });
 
     updateTotal();
+    updateCartUI();
+
     window.scrollTo(0, scroll);
 }
 
@@ -150,7 +220,7 @@ function increase(id,name,price){
 function decrease(id){
     if(cart[id]){
         cart[id].qty--;
-        if(cart[id].qty <= 0) delete cart[id];
+        if(cart[id].qty<=0) delete cart[id];
     }
     renderProducts();
 }
@@ -161,6 +231,22 @@ function updateTotal(){
         total += cart[id].price * cart[id].qty;
     }
     document.getElementById('total').innerText = total;
+}
+
+function updateCartUI(){
+    let count = 0;
+    for(let id in cart){
+        count += cart[id].qty;
+    }
+
+    document.getElementById('cartCount').innerText = count;
+
+    let btn = document.getElementById('cartBtn');
+    if(count > 0){
+        btn.classList.add("active");
+    } else {
+        btn.classList.remove("active");
+    }
 }
 
 /* CART PAGE */
@@ -212,17 +298,15 @@ function placeOrder(){
             return;
         }
 
-        alert("✅ Order placed successfully!");
+        alert("✅ Order placed");
 
         generatePDF();
 
     })
-    .catch(()=>{
-        alert("❌ Order failed");
-    });
+    .catch(()=> alert("❌ Order failed"));
 }
 
-/* PDF BILL */
+/* PDF */
 function generatePDF(){
 
     const { jsPDF } = window.jspdf;
@@ -231,10 +315,7 @@ function generatePDF(){
     let y = 20;
     let total = 0;
 
-    doc.setFontSize(16);
     doc.text("Daily Mart Bill", 80, 10);
-
-    doc.setFontSize(12);
 
     doc.text("Product", 20, y);
     doc.text("Qty", 100, y);
@@ -251,7 +332,7 @@ function generatePDF(){
 
         doc.text(item.name, 20, y);
         doc.text(String(item.qty), 100, y);
-        doc.text("₹" + itemTotal, 140, y);
+        doc.text("₹"+itemTotal, 140, y);
 
         y += 10;
     }
@@ -260,12 +341,9 @@ function generatePDF(){
     doc.line(20, y, 180, y);
     y += 10;
 
-    doc.setFontSize(14);
-    doc.text("Total: ₹" + total, 20, y);
+    doc.text("Total: ₹"+total, 20, y);
 
-    let confirmDownload = confirm("🧾 Bill Ready!\nDownload PDF?");
-
-    if(confirmDownload){
+    if(confirm("Download Bill?")){
         doc.save("bill.pdf");
     }
 
@@ -274,6 +352,5 @@ function generatePDF(){
 }
 
 </script>
-
 </body>
 </html>
