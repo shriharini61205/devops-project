@@ -2,92 +2,94 @@
 <html>
 <head>
 <title>Daily Mart</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <style>
-body { font-family: Arial; margin:0; background:#f1f3f6; padding-bottom:80px; }
+body { font-family: Arial; margin:0; background:#f1f3f6; }
 
-.header {
-    background:#2874f0;
-    color:white;
-    padding:15px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+/* AUTH UI */
+.center {
+    display:flex; justify-content:center; align-items:center;
+    height:100vh; background:linear-gradient(135deg,#2874f0,#6dd5fa);
 }
 
-#products {
-    display:grid;
-    grid-template-columns:repeat(5,1fr);
-    gap:20px;
-    padding:20px;
+.auth-box {
+    background:white; padding:30px; border-radius:10px;
+    width:320px; text-align:center;
+    box-shadow:0 5px 15px rgba(0,0,0,0.2);
 }
 
-.card {
-    background:white;
-    padding:10px;
-    border-radius:10px;
-    text-align:center;
-}
-
-.card img {
-    width:100%;
-    height:150px;
-    object-fit:contain;
+input {
+    padding:10px; margin:8px; width:90%;
+    border:1px solid #ccc; border-radius:5px;
 }
 
 button {
-    padding:6px 10px;
-    margin:5px;
-    cursor:pointer;
-    border:none;
-    border-radius:5px;
-    background:#2874f0;
+    padding:10px; border:none; border-radius:5px;
+    cursor:pointer; margin-top:10px;
+}
+
+.primary { background:#2874f0; color:white; width:100%; }
+.success { background:green; color:white; width:100%; }
+.danger { background:red; color:white; }
+
+/* HEADER */
+.header {
+    background:#2874f0; color:white;
+    padding:15px; display:flex;
+    justify-content:space-between; align-items:center;
+}
+
+/* PRODUCTS */
+#products {
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:20px; padding:20px;
+}
+
+.card {
+    background:white; padding:15px;
+    border-radius:10px; text-align:center;
+}
+
+.card img {
+    width:100%; height:140px;
+    object-fit:cover;
+}
+
+.price { color:green; font-weight:bold; }
+
+/* QTY */
+.qty {
+    display:flex; justify-content:center;
+    gap:10px; margin-top:10px;
+}
+
+.qty button {
+    background:#2874f0; color:white;
+}
+
+/* CART BAR */
+.cart-bar {
+    position:fixed; bottom:0;
+    width:100%; background:white;
+    padding:15px; text-align:center;
+}
+
+.cart-btn {
+    background:#ff9800;
     color:white;
 }
 
-#cartBtn {
-    background:#ff9800;
-    font-weight:bold;
+/* CART TABLE */
+.table {
+    width:100%; margin-top:20px;
 }
 
-#cartBtn.active {
-    background:red;
-}
-
-.cart-bar {
-    position:fixed;
-    bottom:0;
-    width:100%;
-    background:white;
-    padding:10px;
-    text-align:center;
-}
-
-.center {
+.table div {
     display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
-
-.box {
-    background:white;
-    padding:30px;
-    border-radius:10px;
-    text-align:center;
-    width:300px;
-}
-
-.bill-box {
-    background:white;
-    margin:20px;
-    padding:20px;
-    border-radius:10px;
+    justify-content:space-between;
+    padding:5px 0;
 }
 </style>
 </head>
@@ -97,31 +99,21 @@ button {
 
 <script>
 
-let cart = {};
+let cart = JSON.parse(localStorage.getItem("cart")) || {};
 let allProducts = [];
+let total = 0;
 
 showAuth();
 
-/* AUTH */
+/* ---------------- AUTH ---------------- */
+
 function showAuth(){
     document.getElementById('app').innerHTML = `
     <div class="center">
-        <div class="box">
-            <h2>Welcome</h2>
-            <button onclick="showLogin()">Login</button><br><br>
-            <button onclick="showSignup()">Signup</button>
-        </div>
-    </div>`;
-}
-
-function showLogin(){
-    document.getElementById('app').innerHTML = `
-    <div class="center">
-        <div class="box">
-            <h2>Login</h2>
-            <input id="email" placeholder="Email"><br>
-            <input id="password" type="password" placeholder="Password"><br>
-            <button onclick="login()">Login</button>
+        <div class="auth-box">
+            <h2>Daily Mart</h2>
+            <button class="primary" onclick="showLogin()">Login</button>
+            <button class="success" onclick="showSignup()">Signup</button>
         </div>
     </div>`;
 }
@@ -129,226 +121,244 @@ function showLogin(){
 function showSignup(){
     document.getElementById('app').innerHTML = `
     <div class="center">
-        <div class="box">
+        <div class="auth-box">
             <h2>Signup</h2>
-            <input id="email" placeholder="Email"><br>
-            <input id="password" type="password" placeholder="Password"><br>
-            <button onclick="signup()">Signup</button>
+            <input id="email" placeholder="Email">
+            <input id="password" type="password" placeholder="Password">
+            <button class="success" onclick="signup()">Signup</button>
         </div>
     </div>`;
 }
 
 function signup(){
-    localStorage.setItem("email", email.value);
-    localStorage.setItem("password", password.value);
-    alert("Signup success");
-    showLogin();
+    if(!email.value || !password.value){
+        alert("Fill all fields");
+        return;
+    }
+
+    localStorage.setItem("userEmail", email.value);
+    localStorage.setItem("userPassword", password.value);
+
+    showDetails();
+}
+
+function showDetails(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="auth-box">
+            <h2>Details</h2>
+            <input id="name" placeholder="Name">
+            <input id="phone" placeholder="Phone">
+            <input id="address" placeholder="Address">
+            <button class="success" onclick="saveDetails()">Continue</button>
+        </div>
+    </div>`;
+}
+
+function saveDetails(){
+    if(!name.value || !phone.value || !address.value){
+        alert("Fill all details");
+        return;
+    }
+
+    localStorage.setItem("details", JSON.stringify({
+        name:name.value,
+        phone:phone.value,
+        address:address.value
+    }));
+
+    showProducts();
+}
+
+function showLogin(){
+    document.getElementById('app').innerHTML = `
+    <div class="center">
+        <div class="auth-box">
+            <h2>Login</h2>
+            <input id="email" placeholder="Email">
+            <input id="password" type="password" placeholder="Password">
+            <button class="primary" onclick="login()">Login</button>
+        </div>
+    </div>`;
 }
 
 function login(){
-    if(email.value === localStorage.getItem("email") &&
-       password.value === localStorage.getItem("password")){
-        loadProducts();
+    if(
+        email.value === localStorage.getItem("userEmail") &&
+        password.value === localStorage.getItem("userPassword")
+    ){
+        showProducts();
     } else {
-        alert("Invalid credentials");
+        alert("Invalid login");
     }
 }
 
-/* PRODUCTS */
-function loadProducts(){
+/* ---------------- PRODUCTS ---------------- */
 
+function showProducts(){
     document.getElementById('app').innerHTML = `
     <div class="header">
         <h2>Daily Mart</h2>
-        <button id="cartBtn" onclick="goToCart()">🛒 (<span id="cartCount">0</span>)</button>
+        <button class="danger" onclick="logout()">Logout</button>
     </div>
 
     <div id="products"></div>
 
     <div class="cart-bar">
-        Total ₹<span id="total">0</span>
-    </div>
-    `;
+        Total: ₹<span id="total">0</span>
+        <button class="cart-btn" onclick="goToCart()">View Cart</button>
+    </div>`;
 
     fetch('/api/products')
     .then(res => res.json())
     .then(data => {
         allProducts = data;
-        renderProducts();
+        renderProducts(data);
     });
 }
 
-function renderProducts(){
-
-    let scroll = window.scrollY;
-
+function renderProducts(data){
     let container = document.getElementById('products');
     container.innerHTML = "";
 
-    allProducts.forEach(item => {
-
-        let qty = cart[item.id] ? cart[item.id].qty : 0;
+    data.forEach(item => {
+        let id = item.id;
+        let qty = cart[id]?.qty || 0;
 
         let div = document.createElement('div');
         div.className = "card";
 
         div.innerHTML = `
-            <img src="/images/${item.image}">
-            <h4>${item.name}</h4>
-            <p>₹${item.price}</p>
-            <button onclick="decrease('${item.id}')">-</button>
-            ${qty}
-            <button onclick="increase('${item.id}','${item.name}',${item.price})">+</button>
-        `;
+        <img src="/images/${item.image}">
+        <h3>${item.name}</h3>
+        <p class="price">₹${item.price}</p>
+
+        <div class="qty">
+            <button onclick="decrease('${id}')">-</button>
+            <span id="q-${id}">${qty}</span>
+            <button onclick="increase('${id}','${item.name}',${item.price})">+</button>
+        </div>`;
 
         container.appendChild(div);
     });
 
     updateTotal();
-    updateCartUI();
-
-    window.scrollTo(0, scroll);
 }
 
-/* CART */
+/* ---------------- CART ---------------- */
+
 function increase(id,name,price){
     if(!cart[id]) cart[id] = {name,price,qty:0};
     cart[id].qty++;
-    renderProducts();
+    localStorage.setItem("cart", JSON.stringify(cart));
+    updateTotal();
+    document.getElementById(`q-${id}`).innerText = cart[id].qty;
 }
 
 function decrease(id){
     if(cart[id]){
         cart[id].qty--;
         if(cart[id].qty<=0) delete cart[id];
+        localStorage.setItem("cart", JSON.stringify(cart));
+        updateTotal();
+        document.getElementById(`q-${id}`).innerText = cart[id]?.qty || 0;
     }
-    renderProducts();
 }
 
 function updateTotal(){
-    let total = 0;
-    for(let id in cart){
-        total += cart[id].price * cart[id].qty;
+    total = 0;
+    for(let i in cart){
+        total += cart[i].price * cart[i].qty;
     }
     document.getElementById('total').innerText = total;
 }
 
-function updateCartUI(){
-    let count = 0;
-    for(let id in cart){
-        count += cart[id].qty;
-    }
-
-    document.getElementById('cartCount').innerText = count;
-
-    let btn = document.getElementById('cartBtn');
-    if(count > 0){
-        btn.classList.add("active");
-    } else {
-        btn.classList.remove("active");
-    }
-}
-
 /* CART PAGE */
+
 function goToCart(){
-
-    let total = 0;
-
     let html = `
     <div class="header">
         <h2>Cart</h2>
-        <button onclick="loadProducts()">Back</button>
+        <button onclick="showProducts()">Back</button>
     </div>
+    <div style="padding:20px">`;
 
-    <div class="bill-box">
-    `;
+    let total = 0;
 
     for(let id in cart){
         let item = cart[id];
-        let itemTotal = item.price * item.qty;
-        total += itemTotal;
+        let t = item.price * item.qty;
+        total += t;
 
-        html += `<div>${item.name} (${item.qty}) = ₹${itemTotal}</div>`;
+        html += `<div class="table">
+            <div>${item.name}</div>
+            <div>${item.qty}</div>
+            <div>₹${t}</div>
+        </div>`;
     }
 
     html += `
     <hr>
     <h3>Total = ₹${total}</h3>
-    <hr>
-    <button onclick="placeOrder()">Place Order</button>
-    </div>
-    `;
+    <button class="success" onclick="placeOrder()">Place Order</button>
+    </div>`;
 
     document.getElementById('app').innerHTML = html;
 }
 
 /* ORDER */
-function placeOrder(){
 
+function placeOrder(){
     fetch('/api/order',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ cart })
+        body: JSON.stringify({
+            cart: cart,
+            user: JSON.parse(localStorage.getItem("details"))
+        })
     })
     .then(res => res.json())
     .then(data => {
+        alert("Order placed!");
 
-        if(data.error){
-            alert("❌ " + data.error);
-            return;
-        }
+        showBill();
 
-        alert("✅ Order placed");
-
-        generatePDF();
-
+        localStorage.removeItem("cart");
+        cart = {};
     })
-    .catch(()=> alert("❌ Order failed"));
+    .catch(()=> alert("Order failed"));
 }
 
-/* PDF */
-function generatePDF(){
+/* BILL */
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    let y = 20;
-    let total = 0;
-
-    doc.text("Daily Mart Bill", 80, 10);
-
-    doc.text("Product", 20, y);
-    doc.text("Qty", 100, y);
-    doc.text("Price", 140, y);
-
-    y += 10;
-    doc.line(20, y, 180, y);
-    y += 10;
+function showBill(){
+    let total=0;
+    let text="Product   Qty   Price\n\n";
 
     for(let id in cart){
-        let item = cart[id];
-        let itemTotal = item.price * item.qty;
-        total += itemTotal;
-
-        doc.text(item.name, 20, y);
-        doc.text(String(item.qty), 100, y);
-        doc.text("₹"+itemTotal, 140, y);
-
-        y += 10;
+        let i=cart[id];
+        let t=i.price*i.qty;
+        total+=t;
+        text += `${i.name}   ${i.qty}   ${t}\n`;
     }
 
-    y += 5;
-    doc.line(20, y, 180, y);
-    y += 10;
+    text += "\n-------------------\n";
+    text += "Total = ₹"+total;
 
-    doc.text("Total: ₹"+total, 20, y);
+    let blob = new Blob([text], {type:"application/pdf"});
+    let url = URL.createObjectURL(blob);
 
-    if(confirm("Download Bill?")){
-        doc.save("bill.pdf");
+    if(confirm("Download bill?")){
+        let a=document.createElement("a");
+        a.href=url;
+        a.download="bill.pdf";
+        a.click();
     }
+}
 
-    cart = {};
-    loadProducts();
+function logout(){
+    localStorage.clear();
+    location.reload();
 }
 
 </script>
