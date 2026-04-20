@@ -3,27 +3,20 @@ const AWS = require('aws-sdk');
 
 const app = express();
 
-/* MIDDLEWARE */
 app.use(express.json());
 app.use(express.static(__dirname));
 app.use('/images', express.static(__dirname + '/images'));
 
-/* AWS CONFIG */
 AWS.config.update({
     region: 'ap-southeast-1'
 });
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
 
-/* TEST */
-app.get('/test', (req, res) => {
-    res.json({ message: "Server working ✅" });
-});
-
-/* PRODUCTS API (40 ITEMS) */
+/* PRODUCTS */
 app.get('/api/products', (req, res) => {
     res.json([
-        // Fruits
+
         { id:"1", name:"Banana", price:20, image:"fruits/banana.jpg" },
         { id:"2", name:"Apple", price:150, image:"fruits/apple.jpg" },
         { id:"3", name:"Mango", price:120, image:"fruits/mango.jpg" },
@@ -35,7 +28,6 @@ app.get('/api/products', (req, res) => {
         { id:"9", name:"Kiwi", price:200, image:"fruits/kiwi.jpg" },
         { id:"10", name:"Guava", price:40, image:"fruits/guava.jpg" },
 
-        // Grocery
         { id:"11", name:"Milk", price:35, image:"grocery/milk.jpg" },
         { id:"12", name:"Mushroom", price:50, image:"grocery/mushroom.jpg" },
         { id:"13", name:"Oats", price:60, image:"grocery/oats.jpg" },
@@ -44,10 +36,9 @@ app.get('/api/products', (req, res) => {
         { id:"16", name:"Salt", price:20, image:"grocery/salt.jpg" },
         { id:"17", name:"Tea", price:150, image:"grocery/tea.jpg" },
         { id:"18", name:"Coffee", price:200, image:"grocery/coffee.jpg" },
-        { id:"19", name:"Paneer", price:30, image:"grocery/paneer.jpg" },
+        { id:"19", name:"Panner", price:30, image:"grocery/panner.jpg" },
         { id:"20", name:"Wheat", price:40, image:"grocery/wheat.jpg" },
 
-        // Snacks
         { id:"21", name:"Chips", price:20, image:"snacks/chips.jpg" },
         { id:"22", name:"Cookies", price:40, image:"snacks/cookies.jpg" },
         { id:"23", name:"Popcorn", price:50, image:"snacks/popcorn.jpg" },
@@ -59,7 +50,6 @@ app.get('/api/products', (req, res) => {
         { id:"29", name:"Pizza", price:150, image:"snacks/pizza.jpg" },
         { id:"30", name:"Fries", price:90, image:"snacks/fries.jpg" },
 
-        // Spices
         { id:"31", name:"Turmeric", price:30, image:"spices/turmeric.jpg" },
         { id:"32", name:"Chili Powder", price:40, image:"spices/chili.jpg" },
         { id:"33", name:"Coriander", price:35, image:"spices/coriander.jpg" },
@@ -70,22 +60,23 @@ app.get('/api/products', (req, res) => {
         { id:"38", name:"Cardamom", price:120, image:"spices/cardamom.jpg" },
         { id:"39", name:"Cloves", price:110, image:"spices/cloves.jpg" },
         { id:"40", name:"Cinnamon", price:90, image:"spices/cinnamon.jpg" }
+
     ]);
 });
 
-/* ORDER API */
+/* ORDER */
 app.post('/api/order', async (req, res) => {
+
     try {
-        const { cart, user } = req.body;
+
+        const { cart } = req.body;
 
         if (!cart || Object.keys(cart).length === 0) {
-            return res.status(400).json({ error: "Cart empty" });
+            return res.json({ error: "Cart empty" });
         }
 
-        const orderId = Date.now().toString();
-
-        let items = [];
         let total = 0;
+        let items = [];
 
         for (let id in cart) {
             let item = cart[id];
@@ -101,28 +92,27 @@ app.post('/api/order', async (req, res) => {
             });
         }
 
-        const params = {
+        const orderId = Date.now().toString();
+
+        await dynamo.put({
             TableName: "Orders",
             Item: {
                 id: orderId,
-                user,
                 items,
                 total,
                 createdAt: new Date().toISOString()
             }
-        };
-
-        await dynamo.put(params).promise();
+        }).promise();
 
         res.json({ orderId });
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "DB Error" });
+        res.json({ error: "DB error" });
     }
 });
 
-/* SERVER */
+/* START SERVER */
 app.listen(3000, "0.0.0.0", () => {
     console.log("🚀 Server running on port 3000");
 });
