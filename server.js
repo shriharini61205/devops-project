@@ -38,7 +38,7 @@ app.get('/api/products', (req, res) => {
         { id:"16", name:"Salt", price:20, image:"grocery/salt.jpg" },
         { id:"17", name:"Tea", price:150, image:"grocery/tea.jpg" },
         { id:"18", name:"Coffee", price:200, image:"grocery/coffee.jpg" },
-        { id:"19", name:"Paneer", price:120, image:"grocery/paneer.jpg" },
+        { id:"19", name:"Panner", price:120, image:"grocery/panner.jpg" },
         { id:"20", name:"Wheat", price:40, image:"grocery/wheat.jpg" },
 
         // 🍪 SNACKS (10)
