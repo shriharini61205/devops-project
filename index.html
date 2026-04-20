@@ -4,6 +4,9 @@
 <title>Daily Mart</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- ✅ PDF LIBRARY -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
 body { font-family: Arial; margin:0; background:#f1f3f6; }
 
@@ -81,7 +84,6 @@ button {
 <script>
 
 let cart = JSON.parse(localStorage.getItem("cart")) || {};
-let allProducts = [];
 let total = 0;
 
 showAuth();
@@ -111,16 +113,13 @@ function showSignup(){
 }
 
 function signup(){
-    let emailVal = document.getElementById("email").value.trim();
-    let passVal = document.getElementById("password").value.trim();
+    let email = document.getElementById("email").value.trim();
+    let pass = document.getElementById("password").value.trim();
 
-    if(!emailVal || !passVal){
-        alert("Fill all fields");
-        return;
-    }
+    if(!email || !pass) return alert("Fill all fields");
 
-    localStorage.setItem("userEmail", emailVal);
-    localStorage.setItem("userPassword", passVal);
+    localStorage.setItem("userEmail", email);
+    localStorage.setItem("userPassword", pass);
 
     showDetails();
 }
@@ -139,20 +138,13 @@ function showDetails(){
 }
 
 function saveDetails(){
-    let nameVal = document.getElementById("name").value.trim();
-    let phoneVal = document.getElementById("phone").value.trim();
-    let addressVal = document.getElementById("address").value.trim();
+    let name = document.getElementById("name").value.trim();
+    let phone = document.getElementById("phone").value.trim();
+    let address = document.getElementById("address").value.trim();
 
-    if(!nameVal || !phoneVal || !addressVal){
-        alert("Fill all details");
-        return;
-    }
+    if(!name || !phone || !address) return alert("Fill all details");
 
-    localStorage.setItem("details", JSON.stringify({
-        name: nameVal,
-        phone: phoneVal,
-        address: addressVal
-    }));
+    localStorage.setItem("details", JSON.stringify({name,phone,address}));
 
     showProducts();
 }
@@ -170,17 +162,13 @@ function showLogin(){
 }
 
 function login(){
-    let emailVal = document.getElementById("email").value.trim();
-    let passVal = document.getElementById("password").value.trim();
+    let email = document.getElementById("email").value.trim();
+    let pass = document.getElementById("password").value.trim();
 
-    if(
-        emailVal === localStorage.getItem("userEmail") &&
-        passVal === localStorage.getItem("userPassword")
-    ){
+    if(email === localStorage.getItem("userEmail") &&
+       pass === localStorage.getItem("userPassword")){
         showProducts();
-    } else {
-        alert("Invalid login");
-    }
+    } else alert("Invalid login");
 }
 
 /* PRODUCTS */
@@ -199,22 +187,20 @@ function showProducts(){
     </div>`;
 
     fetch('/api/products')
-    .then(res => res.json())
-    .then(data => {
-        allProducts = data;
+    .then(res=>res.json())
+    .then(data=>{
         renderProducts(data);
     });
 }
 
 function renderProducts(data){
-    let container = document.getElementById('products');
-    container.innerHTML = "";
+    let box = document.getElementById("products");
+    box.innerHTML = "";
 
-    data.forEach(item => {
-        let id = item.id;
-        let qty = cart[id]?.qty || 0;
+    data.forEach(item=>{
+        let qty = cart[item.id]?.qty || 0;
 
-        let div = document.createElement('div');
+        let div = document.createElement("div");
         div.className = "card";
 
         div.innerHTML = `
@@ -223,121 +209,144 @@ function renderProducts(data){
         <p class="price">₹${item.price}</p>
 
         <div class="qty">
-            <button onclick="decrease('${id}')">-</button>
-            <span id="q-${id}">${qty}</span>
-            <button onclick="increase('${id}','${item.name}',${item.price})">+</button>
+            <button onclick="dec('${item.id}')">-</button>
+            <span id="q-${item.id}">${qty}</span>
+            <button onclick="inc('${item.id}','${item.name}',${item.price})">+</button>
         </div>`;
 
-        container.appendChild(div);
+        box.appendChild(div);
     });
 
     updateTotal();
 }
 
 /* CART */
-function increase(id,name,price){
-    if(!cart[id]) cart[id] = {name,price,qty:0};
+function inc(id,name,price){
+    if(!cart[id]) cart[id]={name,price,qty:0};
     cart[id].qty++;
-    localStorage.setItem("cart", JSON.stringify(cart));
-    updateTotal();
-    document.getElementById(`q-${id}`).innerText = cart[id].qty;
+    saveCart();
 }
 
-function decrease(id){
+function dec(id){
     if(cart[id]){
         cart[id].qty--;
         if(cart[id].qty<=0) delete cart[id];
-        localStorage.setItem("cart", JSON.stringify(cart));
-        updateTotal();
-        document.getElementById(`q-${id}`).innerText = cart[id]?.qty || 0;
+        saveCart();
     }
 }
 
+function saveCart(){
+    localStorage.setItem("cart",JSON.stringify(cart));
+    renderProducts(Object.values(cart));
+    updateTotal();
+}
+
 function updateTotal(){
-    total = 0;
-    for(let i in cart){
-        total += cart[i].price * cart[i].qty;
-    }
-    document.getElementById('total').innerText = total;
+    let t=0;
+    for(let i in cart) t+=cart[i].price*cart[i].qty;
+    document.getElementById("total").innerText=t;
 }
 
 /* CART PAGE */
 function goToCart(){
-    let html = `
-    <div class="header">
-        <h2>Cart</h2>
-        <button onclick="showProducts()">Back</button>
-    </div>
-    <div style="padding:20px">`;
+    let html=`<div class="header">
+    <h2>Cart</h2>
+    <button onclick="showProducts()">Back</button>
+    </div><div style="padding:20px">`;
 
-    let total = 0;
+    let total=0;
 
     for(let id in cart){
-        let item = cart[id];
-        let t = item.price * item.qty;
-        total += t;
+        let i=cart[id];
+        let t=i.price*i.qty;
+        total+=t;
 
-        html += `<div class="table-row">
-            <span>${item.name}</span>
-            <span>${item.qty}</span>
-            <span>₹${t}</span>
+        html+=`<div class="table-row">
+        <span>${i.name}</span>
+        <span>${i.qty}</span>
+        <span>₹${t}</span>
         </div>`;
     }
 
-    html += `
+    html+=`
     <hr>
-    <h3>Total = ₹${total}</h3>
+    <h3>Total ₹${total}</h3>
     <button class="success" onclick="placeOrder()">Place Order</button>
     </div>`;
 
-    document.getElementById('app').innerHTML = html;
+    document.getElementById("app").innerHTML=html;
 }
 
-/* ORDER FIXED */
+/* ORDER */
 function placeOrder(){
+
     let cartCopy = JSON.parse(JSON.stringify(cart));
 
-    fetch('/api/order',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-            cart: cartCopy,
-            user: JSON.parse(localStorage.getItem("details"))
+    fetch("/api/order",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            cart:cartCopy,
+            user:JSON.parse(localStorage.getItem("details"))
         })
     })
-    .then(res => res.json())
-    .then(() => {
+    .then(()=>{
 
-        alert("✅ Order placed!");
-        showBill(cartCopy);
+        alert("Order Placed!");
+        showBillPopup(cartCopy);
 
         localStorage.removeItem("cart");
-        cart = {};
-    })
-    .catch(()=> alert("❌ Order failed"));
+        cart={};
+
+    });
 }
 
-/* FIXED BILL (WORKING DOWNLOAD) */
-function showBill(billCart){
-    let total = 0;
-    let text = "PRODUCT BILL\n\n";
+/* POPUP */
+function showBillPopup(billCart){
 
-    for(let id in billCart){
-        let i = billCart[id];
-        let t = i.price * i.qty;
-        total += t;
-        text += `${i.name}   Qty:${i.qty}   ₹${t}\n`;
+    let popup=document.createElement("div");
+    popup.style=`position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center`;
+
+    popup.innerHTML=`
+    <div style="background:white;padding:20px;border-radius:10px;text-align:center">
+        <h3>Bill Ready</h3>
+        <p>Download your bill?</p>
+
+        <button onclick='downloadPDF(${JSON.stringify(billCart)})' 
+        style="background:green;color:white;padding:10px;margin:5px">Download PDF</button>
+
+        <button onclick="this.parentElement.parentElement.remove()"
+        style="background:red;color:white;padding:10px;margin:5px">Cancel</button>
+    </div>`;
+
+    document.body.appendChild(popup);
+}
+
+/* PDF */
+function downloadPDF(cart){
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    let y=10,total=0;
+
+    doc.text("DAILY MART INVOICE",10,y);
+    y+=10;
+
+    for(let id in cart){
+        let i=cart[id];
+        let t=i.price*i.qty;
+        total+=t;
+        doc.text(`${i.name} Qty:${i.qty} ₹${t}`,10,y);
+        y+=10;
     }
 
-    text += "\n-------------------\nTOTAL = ₹" + total;
+    doc.text("-------------------",10,y);
+    y+=10;
+    doc.text("TOTAL ₹"+total,10,y);
 
-    let blob = new Blob([text], {type:"text/plain"});
-    let url = URL.createObjectURL(blob);
-
-    let a = document.createElement("a");
-    a.href = url;
-    a.download = "bill.txt";
-    a.click();
+    doc.save("bill.pdf");
 }
 
 function logout(){
