@@ -16,7 +16,6 @@ const dynamo = new AWS.DynamoDB.DocumentClient();
 /* PRODUCTS */
 app.get('/api/products', (req, res) => {
     res.json([
-
         { id:"1", name:"Banana", price:20, image:"fruits/banana.jpg" },
         { id:"2", name:"Apple", price:150, image:"fruits/apple.jpg" },
         { id:"3", name:"Mango", price:120, image:"fruits/mango.jpg" },
@@ -60,13 +59,11 @@ app.get('/api/products', (req, res) => {
         { id:"38", name:"Cardamom", price:120, image:"spices/cardamom.jpg" },
         { id:"39", name:"Cloves", price:110, image:"spices/cloves.jpg" },
         { id:"40", name:"Cinnamon", price:90, image:"spices/cinnamon.jpg" }
-
     ]);
 });
 
 /* ORDER */
 app.post('/api/order', async (req, res) => {
-
     try {
 
         const { cart } = req.body;
@@ -112,7 +109,6 @@ app.post('/api/order', async (req, res) => {
     }
 });
 
-/* START SERVER */
 app.listen(3000, "0.0.0.0", () => {
     console.log("🚀 Server running on port 3000");
 });

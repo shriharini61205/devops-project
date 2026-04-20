@@ -3,8 +3,18 @@
 <head>
 <title>Daily Mart</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- PDF LIBRARY (NO INSTALL) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
-body { font-family: Arial; margin:0; background:#f1f3f6; padding-bottom:80px; }
+body {
+    font-family: Arial;
+    margin:0;
+    background:#f1f3f6;
+    padding-bottom:80px;
+}
 
 .header {
     background:#2874f0;
@@ -24,20 +34,25 @@ body { font-family: Arial; margin:0; background:#f1f3f6; padding-bottom:80px; }
 .card {
     background:white;
     padding:10px;
-    text-align:center;
     border-radius:10px;
+    text-align:center;
 }
 
 .card img {
     width:100%;
-    height:120px;
-    object-fit:cover;
+    height:150px;
+    object-fit:contain; /* FIXED */
+    background:white;
 }
 
 button {
-    padding:5px 10px;
+    padding:6px 10px;
     margin:5px;
     cursor:pointer;
+    border:none;
+    background:#2874f0;
+    color:white;
+    border-radius:5px;
 }
 
 .cart-bar {
@@ -47,12 +62,13 @@ button {
     background:white;
     padding:10px;
     text-align:center;
+    box-shadow:0 -2px 8px rgba(0,0,0,0.1);
 }
 
 .bill-box {
     background:white;
-    padding:20px;
     margin:20px;
+    padding:20px;
     border-radius:10px;
 }
 </style>
@@ -92,10 +108,10 @@ function loadProducts(){
     });
 }
 
-/* RENDER PRODUCTS */
+/* RENDER */
 function renderProducts(){
 
-    let scrollPos = window.scrollY;
+    let scroll = window.scrollY;
 
     let container = document.getElementById('products');
     container.innerHTML = "";
@@ -108,23 +124,23 @@ function renderProducts(){
         div.className = "card";
 
         div.innerHTML = `
-        <img src="/images/${item.image}" onerror="this.src='/images/default.jpg'">
-        <h4>${item.name}</h4>
-        <p>₹${item.price}</p>
+            <img src="/images/${item.image}" onerror="this.src='/images/default.jpg'">
+            <h4>${item.name}</h4>
+            <p>₹${item.price}</p>
 
-        <button onclick="decrease('${item.id}')">-</button>
-        ${qty}
-        <button onclick="increase('${item.id}','${item.name}',${item.price})">+</button>
+            <button onclick="decrease('${item.id}')">-</button>
+            ${qty}
+            <button onclick="increase('${item.id}','${item.name}',${item.price})">+</button>
         `;
 
         container.appendChild(div);
     });
 
     updateTotal();
-    window.scrollTo(0, scrollPos);
+    window.scrollTo(0, scroll);
 }
 
-/* CART LOGIC */
+/* CART */
 function increase(id,name,price){
     if(!cart[id]) cart[id] = {name,price,qty:0};
     cart[id].qty++;
@@ -173,7 +189,6 @@ function goToCart(){
     <hr>
     <h3>Total = ₹${total}</h3>
     <hr>
-
     <button onclick="placeOrder()">Place Order</button>
     </div>
     `;
@@ -181,7 +196,7 @@ function goToCart(){
     document.getElementById('app').innerHTML = html;
 }
 
-/* PLACE ORDER */
+/* ORDER */
 function placeOrder(){
 
     fetch('/api/order',{
@@ -199,7 +214,7 @@ function placeOrder(){
 
         alert("✅ Order placed successfully!");
 
-        showBill();
+        generatePDF();
 
     })
     .catch(()=>{
@@ -207,31 +222,51 @@ function placeOrder(){
     });
 }
 
-/* BILL */
-function showBill(){
+/* PDF BILL */
+function generatePDF(){
 
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    let y = 20;
     let total = 0;
-    let bill = "Product   Qty   Price\n\n";
+
+    doc.setFontSize(16);
+    doc.text("Daily Mart Bill", 80, 10);
+
+    doc.setFontSize(12);
+
+    doc.text("Product", 20, y);
+    doc.text("Qty", 100, y);
+    doc.text("Price", 140, y);
+
+    y += 10;
+    doc.line(20, y, 180, y);
+    y += 10;
 
     for(let id in cart){
         let item = cart[id];
         let itemTotal = item.price * item.qty;
         total += itemTotal;
 
-        bill += `${item.name}   ${item.qty}   ${itemTotal}\n`;
+        doc.text(item.name, 20, y);
+        doc.text(String(item.qty), 100, y);
+        doc.text("₹" + itemTotal, 140, y);
+
+        y += 10;
     }
 
-    bill += "----------------------\n";
-    bill += "Total = ₹" + total;
+    y += 5;
+    doc.line(20, y, 180, y);
+    y += 10;
 
-    let download = confirm("🧾 Bill Ready!\nDownload?");
+    doc.setFontSize(14);
+    doc.text("Total: ₹" + total, 20, y);
 
-    if(download){
-        let blob = new Blob([bill], {type:"text/plain"});
-        let link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "bill.txt";
-        link.click();
+    let confirmDownload = confirm("🧾 Bill Ready!\nDownload PDF?");
+
+    if(confirmDownload){
+        doc.save("bill.pdf");
     }
 
     cart = {};
