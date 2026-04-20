@@ -146,33 +146,41 @@ function showDetails(){
     <div class="center">
         <div class="auth-box">
             <h2>Details</h2>
-            <input id="name" placeholder="Name">
-            <input id="phone" placeholder="Phone">
-            <input id="address" placeholder="Address">
+           <input id="name" placeholder="Name">
+<input id="phone" placeholder="Phone">
+<input id="address" placeholder="Address">
             <button class="success" onclick="saveDetails()">Continue</button>
         </div>
     </div>`;
 }
 
 function saveDetails(){
-    let nameVal = document.getElementById("name").value.trim();
-    let phoneVal = document.getElementById("phone").value.trim();
-    let addressVal = document.getElementById("address").value.trim();
+    let nameInput = document.getElementById("name");
+    let phoneInput = document.getElementById("phone");
+    let addressInput = document.getElementById("address");
 
-    if(!nameVal || !phoneVal || !addressVal){
+    let nameVal = nameInput.value.trim();
+    let phoneVal = phoneInput.value.trim();
+    let addressVal = addressInput.value.trim();
+
+    // Debug (optional)
+    console.log(nameVal, phoneVal, addressVal);
+
+    if(nameVal === "" || phoneVal === "" || addressVal === ""){
         alert("Fill all details");
         return;
     }
 
+    // Save properly
     localStorage.setItem("details", JSON.stringify({
-        name:nameVal,
-        phone:phoneVal,
-        address:addressVal
+        name: nameVal,
+        phone: phoneVal,
+        address: addressVal
     }));
 
+    // ✅ Navigate to main page
     showProducts();
 }
-
 function showLogin(){
     document.getElementById('app').innerHTML = `
     <div class="center">
