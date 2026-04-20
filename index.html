@@ -7,7 +7,6 @@
 <style>
 body { font-family: Arial; margin:0; background:#f1f3f6; }
 
-/* AUTH */
 .center {
     display:flex; justify-content:center; align-items:center;
     height:100vh; background:linear-gradient(135deg,#2874f0,#6dd5fa);
@@ -33,14 +32,12 @@ button {
 .success { background:green; color:white; width:100%; }
 .danger { background:red; color:white; }
 
-/* HEADER */
 .header {
     background:#2874f0; color:white;
     padding:15px; display:flex;
     justify-content:space-between; align-items:center;
 }
 
-/* PRODUCTS */
 #products {
     display:grid;
     grid-template-columns:repeat(5,1fr);
@@ -52,36 +49,24 @@ button {
     border-radius:10px; text-align:center;
 }
 
-.card img {
-    width:100%; height:160px;
-    object-fit:cover;
-}
-
+.card img { width:100%; height:160px; object-fit:cover; }
 .price { color:green; font-weight:bold; }
 
-/* QTY */
 .qty {
     display:flex; justify-content:center;
     gap:10px; margin-top:10px;
 }
 
-.qty button {
-    background:#2874f0; color:white;
-}
+.qty button { background:#2874f0; color:white; }
 
-/* CART BAR */
 .cart-bar {
     position:fixed; bottom:0;
     width:100%; background:white;
     padding:15px; text-align:center;
 }
 
-.cart-btn {
-    background:#ff9800;
-    color:white;
-}
+.cart-btn { background:#ff9800; color:white; }
 
-/* CART TABLE */
 .table-row {
     display:flex;
     justify-content:space-between;
@@ -102,7 +87,6 @@ let total = 0;
 showAuth();
 
 /* AUTH */
-
 function showAuth(){
     document.getElementById('app').innerHTML = `
     <div class="center">
@@ -146,41 +130,33 @@ function showDetails(){
     <div class="center">
         <div class="auth-box">
             <h2>Details</h2>
-           <input id="name" placeholder="Name">
-<input id="phone" placeholder="Phone">
-<input id="address" placeholder="Address">
+            <input id="name" placeholder="Name">
+            <input id="phone" placeholder="Phone">
+            <input id="address" placeholder="Address">
             <button class="success" onclick="saveDetails()">Continue</button>
         </div>
     </div>`;
 }
 
 function saveDetails(){
-    let nameInput = document.getElementById("name");
-    let phoneInput = document.getElementById("phone");
-    let addressInput = document.getElementById("address");
+    let nameVal = document.getElementById("name").value.trim();
+    let phoneVal = document.getElementById("phone").value.trim();
+    let addressVal = document.getElementById("address").value.trim();
 
-    let nameVal = nameInput.value.trim();
-    let phoneVal = phoneInput.value.trim();
-    let addressVal = addressInput.value.trim();
-
-    // Debug (optional)
-    console.log(nameVal, phoneVal, addressVal);
-
-    if(nameVal === "" || phoneVal === "" || addressVal === ""){
+    if(!nameVal || !phoneVal || !addressVal){
         alert("Fill all details");
         return;
     }
 
-    // Save properly
     localStorage.setItem("details", JSON.stringify({
         name: nameVal,
         phone: phoneVal,
         address: addressVal
     }));
 
-    // ✅ Navigate to main page
     showProducts();
 }
+
 function showLogin(){
     document.getElementById('app').innerHTML = `
     <div class="center">
@@ -208,7 +184,6 @@ function login(){
 }
 
 /* PRODUCTS */
-
 function showProducts(){
     document.getElementById('app').innerHTML = `
     <div class="header">
@@ -260,7 +235,6 @@ function renderProducts(data){
 }
 
 /* CART */
-
 function increase(id,name,price){
     if(!cart[id]) cart[id] = {name,price,qty:0};
     cart[id].qty++;
@@ -288,7 +262,6 @@ function updateTotal(){
 }
 
 /* CART PAGE */
-
 function goToCart(){
     let html = `
     <div class="header">
@@ -320,14 +293,15 @@ function goToCart(){
     document.getElementById('app').innerHTML = html;
 }
 
-/* ORDER */
-
+/* ORDER FIXED */
 function placeOrder(){
+    let cartCopy = JSON.parse(JSON.stringify(cart));
+
     fetch('/api/order',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-            cart: cart,
+            cart: cartCopy,
             user: JSON.parse(localStorage.getItem("details"))
         })
     })
@@ -335,8 +309,7 @@ function placeOrder(){
     .then(() => {
 
         alert("✅ Order placed!");
-
-        showBill();
+        showBill(cartCopy);
 
         localStorage.removeItem("cart");
         cart = {};
@@ -344,31 +317,27 @@ function placeOrder(){
     .catch(()=> alert("❌ Order failed"));
 }
 
-/* BILL */
+/* FIXED BILL (WORKING DOWNLOAD) */
+function showBill(billCart){
+    let total = 0;
+    let text = "PRODUCT BILL\n\n";
 
-function showBill(){
-    let total=0;
-    let text="Product   Qty   Price\n\n";
-
-    for(let id in cart){
-        let i=cart[id];
-        let t=i.price*i.qty;
-        total+=t;
-        text += `${i.name}   ${i.qty}   ${t}\n`;
+    for(let id in billCart){
+        let i = billCart[id];
+        let t = i.price * i.qty;
+        total += t;
+        text += `${i.name}   Qty:${i.qty}   ₹${t}\n`;
     }
 
-    text += "\n-------------------\n";
-    text += "Total = ₹"+total;
+    text += "\n-------------------\nTOTAL = ₹" + total;
 
-    let blob = new Blob([text], {type:"application/pdf"});
+    let blob = new Blob([text], {type:"text/plain"});
     let url = URL.createObjectURL(blob);
 
-    if(confirm("Download bill?")){
-        let a=document.createElement("a");
-        a.href=url;
-        a.download="bill.pdf";
-        a.click();
-    }
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = "bill.txt";
+    a.click();
 }
 
 function logout(){
